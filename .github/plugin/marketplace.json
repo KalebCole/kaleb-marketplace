@@ -47,7 +47,7 @@
         "source": "github",
         "repo": "michael-denyer/pstack-claude",
         "path": "plugins/pstack",
-        "sha": "55430ba22ccc751ab608422761aff14b2f063e5d"
+        "sha": "1ad1595c9a6a4dd19473a7b5e3a03f451bbb289e"
       },
       "category": "Developer Tools"
     },

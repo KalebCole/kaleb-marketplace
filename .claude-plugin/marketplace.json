@@ -50,7 +50,7 @@
         "url": "https://github.com/michael-denyer/pstack-claude.git",
         "path": "plugins/pstack",
         "ref": "main",
-        "sha": "55430ba22ccc751ab608422761aff14b2f063e5d"
+        "sha": "1ad1595c9a6a4dd19473a7b5e3a03f451bbb289e"
       },
       "category": "Developer Tools"
     },
