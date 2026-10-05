@@ -73,6 +73,20 @@
         "authentication": "ON_INSTALL"
       },
       "category": "Developer Tools"
+    },
+    {
+      "name": "lavish-axi",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/kunchenguid/lavish-axi.git",
+        "ref": "main",
+        "sha": "95cf540166d3d8a00e65ea9cd8bbd455016b028b"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
     }
   ]
 }

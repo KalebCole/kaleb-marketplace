@@ -31,6 +31,7 @@ const externalMarkers = {
     "plugins/pstack/.codex-plugin/plugin.json",
     "LICENSE",
   ],
+  "lavish-axi": ["plugin.json", "skills/lavish/SKILL.md", "LICENSE"],
 };
 
 function githubRepo(url) {
