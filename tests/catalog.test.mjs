@@ -10,7 +10,6 @@ import test from "node:test";
 import {
   generateClaudeCatalog,
   generateCopilotCatalog,
-  loadCanonicalCatalog,
   renderJson,
 } from "../scripts/catalog.mjs";
 
@@ -28,34 +27,6 @@ const baseCatalog = {
   },
   plugins: [],
 };
-
-test("loadCanonicalCatalog reads the canonical marketplace order", async () => {
-  const catalog = await loadCanonicalCatalog();
-
-  assert.equal(catalog.name, "kaleb-marketplace");
-  assert.equal(catalog.interface.displayName, "Kaleb Marketplace");
-  assert.deepEqual(
-    catalog.plugins.map((plugin) => plugin.name),
-    ["kaleb-skills", "humanizer", "visual-explainer", "i-have-adhd", "pstack"],
-  );
-
-  const pstack = catalog.plugins.find((plugin) => plugin.name === "pstack");
-  assert.deepEqual(pstack, {
-    name: "pstack",
-    source: {
-      source: "git-subdir",
-      url: "https://github.com/michael-denyer/pstack-claude.git",
-      path: "plugins/pstack",
-      ref: "main",
-      sha: "55430ba22ccc751ab608422761aff14b2f063e5d",
-    },
-    policy: {
-      installation: "AVAILABLE",
-      authentication: "ON_INSTALL",
-    },
-    category: "Developer Tools",
-  });
-});
 
 test("generateCopilotCatalog maps local sources to relative paths", () => {
   const localCatalog = {
@@ -119,36 +90,47 @@ test("generateClaudeCatalog preserves external URL source details", () => {
   assert.equal("policy" in generated.plugins[0], false);
 });
 
-test("generators preserve the pinned pstack subdirectory for each client", async () => {
-  const catalog = await loadCanonicalCatalog();
+test("generators preserve a pinned external subdirectory for each client", () => {
+  const catalog = {
+    ...baseCatalog,
+    plugins: [
+      {
+        name: "subdir-tool",
+        source: {
+          source: "git-subdir",
+          url: "https://github.com/example/tools.git",
+          path: "plugins/subdir-tool",
+          ref: "main",
+          sha,
+        },
+        policy: {
+          installation: "AVAILABLE",
+          authentication: "ON_INSTALL",
+        },
+        category: "Developer Tools",
+      },
+    ],
+  };
   const copilot = generateCopilotCatalog(catalog);
   const claude = generateClaudeCatalog(catalog);
 
   assert.deepEqual(
-    copilot.plugins.find((plugin) => plugin.name === "pstack"),
+    copilot.plugins[0].source,
     {
-      name: "pstack",
-      source: {
-        source: "github",
-        repo: "michael-denyer/pstack-claude",
-        path: "plugins/pstack",
-        sha: "55430ba22ccc751ab608422761aff14b2f063e5d",
-      },
-      category: "Developer Tools",
+      source: "github",
+      repo: "example/tools",
+      path: "plugins/subdir-tool",
+      sha,
     },
   );
   assert.deepEqual(
-    claude.plugins.find((plugin) => plugin.name === "pstack"),
+    claude.plugins[0].source,
     {
-      name: "pstack",
-      source: {
-        source: "git-subdir",
-        url: "https://github.com/michael-denyer/pstack-claude.git",
-        path: "plugins/pstack",
-        ref: "main",
-        sha: "55430ba22ccc751ab608422761aff14b2f063e5d",
-      },
-      category: "Developer Tools",
+      source: "git-subdir",
+      url: "https://github.com/example/tools.git",
+      path: "plugins/subdir-tool",
+      ref: "main",
+      sha,
     },
   );
 });

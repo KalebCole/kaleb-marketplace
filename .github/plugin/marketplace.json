@@ -50,6 +50,15 @@
         "sha": "55430ba22ccc751ab608422761aff14b2f063e5d"
       },
       "category": "Developer Tools"
+    },
+    {
+      "name": "lavish-axi",
+      "source": {
+        "source": "github",
+        "repo": "kunchenguid/lavish-axi",
+        "sha": "95cf540166d3d8a00e65ea9cd8bbd455016b028b"
+      },
+      "category": "Productivity"
     }
   ]
 }
