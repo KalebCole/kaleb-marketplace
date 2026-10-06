@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -47,23 +46,13 @@ async function listFiles(directory, relative = "") {
   return files.flat().sort();
 }
 
-test("skill-creator preserves the complete reviewed upstream directory", async () => {
+test("skill-creator preserves the complete reviewed upstream file set", async () => {
   assert.deepEqual(await listFiles(skillRoot), [...reviewedFiles.keys()].sort());
-  await Promise.all(
-    [...reviewedFiles].map(async ([file, expectedHash]) => {
-      const content = await readFile(path.join(skillRoot, file));
-      assert.equal(
-        createHash("sha256").update(content).digest("hex"),
-        expectedHash,
-        `${file} must match the reviewed upstream content`,
-      );
-    }),
-  );
 });
 
-test("skill-creator keeps upstream invocation metadata unchanged", async () => {
+test("skill-creator keeps stable invocation metadata", async () => {
   const document = await readFile(path.join(skillRoot, "SKILL.md"), "utf8");
-  const match = document.match(/^---\n([\s\S]*?)\n---\n/);
+  const match = document.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
   assert.ok(match, "skill must begin with YAML frontmatter");
   assert.deepEqual(yaml.load(match[1]), {
     name: "skill-creator",
@@ -115,9 +104,51 @@ test("skill-creator support references and local Python imports are included", a
   }
 });
 
+test("skill-creator requires explicit models for evaluation roles", async () => {
+  const document = await readFile(path.join(skillRoot, "SKILL.md"), "utf8");
+  for (const role of [
+    "executor",
+    "baseline_executor",
+    "grader",
+    "analyzer",
+    "comparator",
+    "trigger_evaluator",
+    "description_improver",
+  ]) {
+    assert.ok(document.includes(`"${role}"`), `model plan must include ${role}`);
+  }
+  assert.ok(document.includes("Never let an evaluation agent inherit the session model"));
+  assert.ok(document.includes("Ask the user to approve the plan"));
+
+  const runEval = await readFile(path.join(skillRoot, "scripts/run_eval.py"), "utf8");
+  assert.ok(runEval.includes('parser.add_argument("--model", required=True'));
+  assert.ok(runEval.includes('"model": model'));
+
+  const runLoop = await readFile(path.join(skillRoot, "scripts/run_loop.py"), "utf8");
+  assert.ok(runLoop.includes('parser.add_argument("--evaluation-model", required=True'));
+  assert.ok(runLoop.includes('parser.add_argument("--improvement-model", required=True'));
+  assert.ok(!runLoop.includes('parser.add_argument("--model"'));
+
+  const benchmark = await readFile(path.join(skillRoot, "scripts/aggregate_benchmark.py"), "utf8");
+  for (const option of ["--executor-model", "--grader-model", "--analyzer-model"]) {
+    assert.ok(benchmark.includes(`"${option}", required=True`));
+  }
+  assert.ok(benchmark.includes('"executor": executor_model'));
+  assert.ok(benchmark.includes('"grader": grader_model'));
+  assert.ok(benchmark.includes('"runs_per_configuration": runs_per_configuration'));
+});
+
+test("skill-creator keeps Claude CLI behavior inside a named host adapter", async () => {
+  const document = await readFile(path.join(skillRoot, "SKILL.md"), "utf8");
+  assert.ok(document.includes("## Host adapters"));
+  assert.ok(document.includes("### GitHub Copilot"));
+  assert.ok(document.includes("### Claude Code"));
+  assert.ok(document.includes("only as the Claude Code trigger adapter"));
+});
+
 test("skill-creator records exact provenance and its directory-specific license", async () => {
   const notices = await readFile(path.join(pluginRoot, "THIRD_PARTY_NOTICES.md"), "utf8");
-  const section = notices.split("## `skill-creator`\n")[1]?.split(/\n## /)[0];
+  const section = notices.split(/## `skill-creator`\r?\n/)[1]?.split(/\r?\n## /)[0];
   assert.ok(section, "skill-creator must have its own provenance section");
   for (const text of [
     "Source repository: `https://github.com/anthropics/skills`",
@@ -127,8 +158,9 @@ test("skill-creator records exact provenance and its directory-specific license"
     "Reviewed license path: `skills/skill-creator/LICENSE.txt`",
     "Copyright 2026 Anthropic, PBC.",
     "Apache-2.0",
-    "Local adjustments: none.",
-    "frozen skill copy",
+    "maintains a local fork",
+    "host-neutral workflow",
+    "role-specific model plan",
     "Python 3.10",
     "PyYAML",
     "claude -p",

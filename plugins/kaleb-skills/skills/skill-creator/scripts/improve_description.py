@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Improve a skill description based on eval results.
+"""Improve a skill description with the Claude Code adapter.
 
 Takes eval results (from run_eval.py) and generates an improved description
 by calling `claude -p` as a subprocess (same auth pattern as run_eval.py —
@@ -17,15 +17,16 @@ from pathlib import Path
 from scripts.utils import parse_skill_md
 
 
-def _call_claude(prompt: str, model: str | None, timeout: int = 300) -> str:
+def _call_claude(prompt: str, model: str, timeout: int = 300) -> str:
     """Run `claude -p` with the prompt on stdin and return the text response.
 
     Prompt goes over stdin (not argv) because it embeds the full SKILL.md
     body and can easily exceed comfortable argv length.
     """
     cmd = ["claude", "-p", "--output-format", "text"]
-    if model:
-        cmd.extend(["--model", model])
+    if not model:
+        raise ValueError("model is required; implicit model defaults are not allowed")
+    cmd.extend(["--model", model])
 
     # Remove CLAUDECODE env var to allow nesting claude -p inside a
     # Claude Code session. The guard is for interactive terminal conflicts;
@@ -76,9 +77,9 @@ def improve_description(
     else:
         scores_summary = f"Train: {train_score}"
 
-    prompt = f"""You are optimizing a skill description for a Claude Code skill called "{skill_name}". A "skill" is sort of like a prompt, but with progressive disclosure -- there's a title and description that Claude sees when deciding whether to use the skill, and then if it does use the skill, it reads the .md file which has lots more details and potentially links to other resources in the skill folder like helper files and scripts and additional documentation or examples.
+    prompt = f"""You are optimizing a skill description for an agent skill called "{skill_name}". A skill uses progressive disclosure: the host sees a title and description when deciding whether to load the full instructions and bundled resources.
 
-The description appears in Claude's "available_skills" list. When a user sends a query, Claude decides whether to invoke the skill based solely on the title and on this description. Your goal is to write a description that triggers for relevant queries, and doesn't trigger for irrelevant ones.
+The description appears in the host's available skills list. When a user sends a query, the host decides whether to invoke the skill based on the title and description. Write a description that triggers for relevant queries and does not trigger for irrelevant queries.
 
 Here's the current description:
 <current_description>
@@ -134,7 +135,7 @@ Concretely, your description should not be more than about 100-200 words, even i
 Here are some tips that we've found to work well in writing these descriptions:
 - The skill should be phrased in the imperative -- "Use this skill for" rather than "this skill does"
 - The skill description should focus on the user's intent, what they are trying to achieve, vs. the implementation details of how the skill works.
-- The description competes with other skills for Claude's attention — make it distinctive and immediately recognizable.
+- The description competes with other skills for the host's attention — make it distinctive and immediately recognizable.
 - If you're getting lots of failures after repeated attempts, change things up. Try different sentence structures or wordings.
 
 I'd encourage you to be creative and mix up the style in different iterations since you'll have multiple opportunities to try different approaches and we'll just grab the highest-scoring one at the end. 

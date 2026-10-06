@@ -49,9 +49,12 @@ This plugin contains frozen copies of reviewed upstream skill files.
   skill's Apache-2.0 license. No applicable upstream `NOTICE` file or nested
   license override was present at the reviewed commit. Other upstream skills
   have different terms and are not included.
-- Local adjustments: none. All 18 files, including invocation metadata, are
-  unchanged. This is a frozen skill copy, not an external catalog reference or
-  an automatically updated source.
+- Local adjustments: this repository maintains a local fork. `SKILL.md` now uses
+  a host-neutral workflow and requires an approved, role-specific model plan
+  before multi-agent evaluations. The Claude Code trigger scripts remain as an
+  explicit adapter and reject implicit model defaults. Benchmark schemas and
+  aggregation record the models used by each evaluation role. The upstream
+  license and source attribution remain unchanged.
 
 ### Runtime dependencies and support boundaries
 
@@ -67,11 +70,12 @@ from the installed `skill-creator` directory as shown in `SKILL.md`; its sibling
 `utils/package_skill.py` examples are legacy upstream paths; the actual bundled
 entry point is `python -m scripts.package_skill`, as specified in `SKILL.md`.
 
-Description optimization requires an authenticated Claude Code CLI (`claude -p`)
+The bundled Claude Code description-optimization adapter requires an authenticated
+Claude Code CLI (`claude -p`)
 and writes temporary commands under the current project's `.claude/commands/`.
-It is not a Copilot-native evaluation backend. Subagent and presentation steps
-depend on the host's available tools; storage and catalog validation do not prove
-equivalent execution in every client.
+GitHub Copilot uses its native skill and subagent tools instead. Every host must
+pass explicit role-specific models for evaluation work. Subagent and presentation
+steps depend on the host's available tools.
 
 The HTML templates request Google Fonts. The evaluation viewer requests
 SheetJS 0.20.3 from its upstream CDN, with the upstream integrity attribute, for

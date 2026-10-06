@@ -54,7 +54,8 @@ def run_loop(
     runs_per_query: int,
     trigger_threshold: float,
     holdout: float,
-    model: str,
+    evaluation_model: str,
+    improvement_model: str,
     verbose: bool,
     live_report_path: Path | None = None,
     log_dir: Path | None = None,
@@ -95,7 +96,7 @@ def run_loop(
             project_root=project_root,
             runs_per_query=runs_per_query,
             trigger_threshold=trigger_threshold,
-            model=model,
+            model=evaluation_model,
         )
         eval_elapsed = time.time() - t0
 
@@ -202,7 +203,7 @@ def run_loop(
             current_description=current_description,
             eval_results=train_results,
             history=blinded_history,
-            model=model,
+            model=improvement_model,
             log_dir=log_dir,
             iteration=iteration,
         )
@@ -237,6 +238,15 @@ def run_loop(
         "holdout": holdout,
         "train_size": len(train_set),
         "test_size": len(test_set),
+        "models": {
+            "trigger_evaluator": evaluation_model,
+            "description_improver": improvement_model,
+        },
+        "limits": {
+            "max_concurrency": num_workers,
+            "runs_per_query": runs_per_query,
+            "max_iterations": max_iterations,
+        },
         "history": history,
     }
 
@@ -252,7 +262,8 @@ def main():
     parser.add_argument("--runs-per-query", type=int, default=3, help="Number of runs per query")
     parser.add_argument("--trigger-threshold", type=float, default=0.5, help="Trigger rate threshold")
     parser.add_argument("--holdout", type=float, default=0.4, help="Fraction of eval set to hold out for testing (0 to disable)")
-    parser.add_argument("--model", required=True, help="Model for improvement")
+    parser.add_argument("--evaluation-model", required=True, help="Explicit model for repeated trigger evaluations")
+    parser.add_argument("--improvement-model", required=True, help="Explicit model for description improvement")
     parser.add_argument("--verbose", action="store_true", help="Print progress to stderr")
     parser.add_argument("--report", default="auto", help="Generate HTML report at this path (default: 'auto' for temp file, 'none' to disable)")
     parser.add_argument("--results-dir", default=None, help="Save all outputs (results.json, report.html, log.txt) to a timestamped subdirectory here")
@@ -300,7 +311,8 @@ def main():
         runs_per_query=args.runs_per_query,
         trigger_threshold=args.trigger_threshold,
         holdout=args.holdout,
-        model=args.model,
+        evaluation_model=args.evaluation_model,
+        improvement_model=args.improvement_model,
         verbose=args.verbose,
         live_report_path=live_report_path,
         log_dir=log_dir,

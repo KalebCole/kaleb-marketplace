@@ -224,7 +224,14 @@ def aggregate_results(results: dict) -> dict:
     return run_summary
 
 
-def generate_benchmark(benchmark_dir: Path, skill_name: str = "", skill_path: str = "") -> dict:
+def generate_benchmark(
+    benchmark_dir: Path,
+    skill_name: str = "",
+    skill_path: str = "",
+    executor_model: str = "",
+    grader_model: str = "",
+    analyzer_model: str = "",
+) -> dict:
     """
     Generate complete benchmark.json from run results.
     """
@@ -239,6 +246,10 @@ def generate_benchmark(benchmark_dir: Path, skill_name: str = "", skill_path: st
                 "eval_id": result["eval_id"],
                 "configuration": config,
                 "run_number": result["run_number"],
+                "models": {
+                    "executor": executor_model,
+                    "grader": grader_model,
+                },
                 "result": {
                     "pass_rate": result["pass_rate"],
                     "passed": result["passed"],
@@ -259,16 +270,27 @@ def generate_benchmark(benchmark_dir: Path, skill_name: str = "", skill_path: st
         for config in results.values()
         for r in config
     ))
+    runs_per_configuration = max(
+        (
+            sum(1 for result in config_results if result["eval_id"] == eval_id)
+            for config_results in results.values()
+            for eval_id in eval_ids
+        ),
+        default=0,
+    )
 
     benchmark = {
         "metadata": {
             "skill_name": skill_name or "<skill-name>",
             "skill_path": skill_path or "<path/to/skill>",
-            "executor_model": "<model-name>",
-            "analyzer_model": "<model-name>",
+            "models": {
+                "executor": executor_model,
+                "grader": grader_model,
+                "analyzer": analyzer_model,
+            },
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "evals_run": eval_ids,
-            "runs_per_configuration": 3
+            "runs_per_configuration": runs_per_configuration
         },
         "runs": runs,
         "run_summary": run_summary,
@@ -293,7 +315,7 @@ def generate_markdown(benchmark: dict) -> str:
     lines = [
         f"# Skill Benchmark: {metadata['skill_name']}",
         "",
-        f"**Model**: {metadata['executor_model']}",
+        f"**Models**: executor={metadata['models']['executor']}, grader={metadata['models']['grader']}, analyzer={metadata['models']['analyzer']}",
         f"**Date**: {metadata['timestamp']}",
         f"**Evals**: {', '.join(map(str, metadata['evals_run']))} ({metadata['runs_per_configuration']} runs each per configuration)",
         "",
@@ -354,6 +376,9 @@ def main():
         default="",
         help="Path to the skill being benchmarked"
     )
+    parser.add_argument("--executor-model", required=True, help="Model used for task execution runs")
+    parser.add_argument("--grader-model", required=True, help="Model used for grading runs")
+    parser.add_argument("--analyzer-model", required=True, help="Model used for benchmark analysis")
     parser.add_argument(
         "--output", "-o",
         type=Path,
@@ -367,7 +392,14 @@ def main():
         sys.exit(1)
 
     # Generate benchmark
-    benchmark = generate_benchmark(args.benchmark_dir, args.skill_name, args.skill_path)
+    benchmark = generate_benchmark(
+        args.benchmark_dir,
+        args.skill_name,
+        args.skill_path,
+        args.executor_model,
+        args.grader_model,
+        args.analyzer_model,
+    )
 
     # Determine output paths
     output_json = args.output or (args.benchmark_dir / "benchmark.json")

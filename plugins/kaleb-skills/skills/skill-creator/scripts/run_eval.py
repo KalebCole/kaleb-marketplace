@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Run trigger evaluation for a skill description.
+"""Run Claude Code trigger evaluation for a skill description.
 
-Tests whether a skill's description causes Claude to trigger (read the skill)
-for a set of queries. Outputs results as JSON.
+This is the Claude Code adapter. It tests whether a skill description causes
+Claude Code to read the skill for a set of queries. Outputs results as JSON.
 """
 
 import argparse
@@ -38,7 +38,7 @@ def run_single_query(
     skill_description: str,
     timeout: int,
     project_root: str,
-    model: str | None = None,
+    model: str = "",
 ) -> bool:
     """Run a single query and return whether the skill was triggered.
 
@@ -74,8 +74,9 @@ def run_single_query(
             "--verbose",
             "--include-partial-messages",
         ]
-        if model:
-            cmd.extend(["--model", model])
+        if not model:
+            raise ValueError("model is required; implicit model defaults are not allowed")
+        cmd.extend(["--model", model])
 
         # Remove CLAUDECODE env var to allow nesting claude -p inside a
         # Claude Code session. The guard is for interactive terminal conflicts;
@@ -190,9 +191,12 @@ def run_eval(
     project_root: Path,
     runs_per_query: int = 1,
     trigger_threshold: float = 0.5,
-    model: str | None = None,
+    model: str = "",
 ) -> dict:
     """Run the full eval set and return results."""
+    if not model:
+        raise ValueError("model is required; implicit model defaults are not allowed")
+
     results = []
 
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
@@ -247,6 +251,10 @@ def run_eval(
     return {
         "skill_name": skill_name,
         "description": description,
+        "adapter": "claude-code",
+        "model": model,
+        "run_count": len(eval_set) * runs_per_query,
+        "max_concurrency": num_workers,
         "results": results,
         "summary": {
             "total": total,
@@ -257,7 +265,7 @@ def run_eval(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run trigger evaluation for a skill description")
+    parser = argparse.ArgumentParser(description="Run Claude Code trigger evaluation for a skill description")
     parser.add_argument("--eval-set", required=True, help="Path to eval set JSON file")
     parser.add_argument("--skill-path", required=True, help="Path to skill directory")
     parser.add_argument("--description", default=None, help="Override description to test")
@@ -265,7 +273,7 @@ def main():
     parser.add_argument("--timeout", type=int, default=30, help="Timeout per query in seconds")
     parser.add_argument("--runs-per-query", type=int, default=3, help="Number of runs per query")
     parser.add_argument("--trigger-threshold", type=float, default=0.5, help="Trigger rate threshold")
-    parser.add_argument("--model", default=None, help="Model to use for claude -p (default: user's configured model)")
+    parser.add_argument("--model", required=True, help="Explicit model ID to use for every claude -p evaluation")
     parser.add_argument("--verbose", action="store_true", help="Print progress to stderr")
     args = parser.parse_args()
 
