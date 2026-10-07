@@ -82,6 +82,38 @@ mode attempts to terminate existing listeners on the selected port; use static
 mode in a shared environment. Repository validation does not execute these
 bundled helpers or make model calls.
 
+## `copilot-delegate`
+
+- Source repository: `https://github.com/amElnagdy/delegate-skills`
+- Reviewed commit: `6826b363085dcc80875372315fe7d208c4bf733f`
+- Original source directory: `skills/copilot-delegate/`
+- Source at reviewed commit:
+  <https://github.com/amElnagdy/delegate-skills/tree/6826b363085dcc80875372315fe7d208c4bf733f/skills/copilot-delegate>
+- Copied files:
+  - `skills/copilot-delegate/SKILL.md`
+  - `skills/copilot-delegate/references/dispatch-and-poll.md`
+  - `skills/copilot-delegate/references/multi-task-queues.md`
+  - `skills/copilot-delegate/references/review-and-land.md`
+  - `skills/copilot-delegate/references/writing-the-brief.md`
+  - `skills/copilot-delegate/scripts/relay.mjs`
+- Reviewed license path: `LICENSE` (repository root; no license override
+  exists in the skill directory)
+- Copyright notice: `Copyright (c) 2026 Ahmed Mohammed (amElnagdy)`
+- License status: MIT. The reviewed root `LICENSE` applies to this skill and
+  its complete text and copyright notice are included in the plugin-level
+  `LICENSE`.
+- The references linked by `SKILL.md` are included. The relay uses Node
+  built-ins only; its normal dispatch does not depend on another skill.
+- Optional dependency blocker: relay `--lane` requires the separate
+  `delegate-setup/scripts/lane.mjs` skill beside this relay. That unrelated
+  skill is not included, so `--lane` is unavailable in this copy unless the
+  user installs `delegate-setup` in the expected sibling location.
+- Local adjustment: `disable-model-invocation: true` was added to `SKILL.md` so
+  the user can invoke the skill directly and the model cannot invoke it
+  automatically. Other copied content and metadata are unchanged. This is a
+  frozen skill copy; it has no automatic updater or separate external catalog
+  entry.
+
 ## `grilling`
 
 - Source repository: `https://github.com/mattpocock/skills`
