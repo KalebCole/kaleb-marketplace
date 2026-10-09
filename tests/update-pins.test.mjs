@@ -6,7 +6,7 @@ import { findUpdates, updatePin } from "../scripts/catalog.mjs";
 const oldSha = "0123456789012345678901234567890123456789";
 const newSha = "abcdefabcdefabcdefabcdefabcdefabcdefabcd";
 const visualSha = "1111111111111111111111111111111111111111";
-const pstackSha = "2222222222222222222222222222222222222222";
+const lavishSha = "2222222222222222222222222222222222222222";
 const catalog = {
   plugins: [
     {
@@ -33,13 +33,20 @@ const catalog = {
       },
     },
     {
-      name: "pstack",
+      name: "lavish-axi",
       source: {
-        source: "git-subdir",
-        url: "https://github.com/michael-denyer/pstack-claude.git",
-        path: "plugins/pstack",
+        source: "url",
+        url: "https://github.com/kunchenguid/lavish-axi.git",
         ref: "main",
-        sha: pstackSha,
+        sha: lavishSha,
+      },
+    },
+    {
+      name: "mattpocock-skills",
+      source: {
+        source: "url",
+        url: "https://github.com/mattpocock/skills.git",
+        ref: "main",
       },
     },
   ],
@@ -50,23 +57,28 @@ test("findUpdates emits one matrix entry for each changed external", async () =>
     if (source.url.includes("humanizer")) {
       return newSha;
     }
-    if (source.url.includes("pstack-claude")) {
+    if (source.url.includes("lavish-axi")) {
       return newSha;
     }
     return source.sha;
   });
   assert.deepEqual(result, {
-    include: [{ name: "humanizer" }, { name: "pstack" }],
+    include: [{ name: "humanizer" }, { name: "lavish-axi" }],
   });
 });
 
 test("updatePin changes only the named external", () => {
-  const updated = updatePin(catalog, "pstack", newSha);
+  const updated = updatePin(catalog, "lavish-axi", newSha);
   assert.equal(updated.plugins[1].source.sha, oldSha);
   assert.equal(updated.plugins[2].source.sha, visualSha);
   assert.equal(updated.plugins[3].source.sha, newSha);
+  assert.equal(updated.plugins[4].source.sha, undefined);
   assert.throws(
     () => updatePin(catalog, "kaleb-skills", newSha),
-    /not external/,
+    /no reviewed pin/,
+  );
+  assert.throws(
+    () => updatePin(catalog, "mattpocock-skills", newSha),
+    /no reviewed pin/,
   );
 });

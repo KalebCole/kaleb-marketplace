@@ -4,7 +4,7 @@ description: Grill the user on creating or improving a skill, then build and dog
 disable-model-invocation: true
 ---
 
-Run a `/grilling` session using `/skill-creator` to reach a shared understanding of the skill the user wants to create or improve.
+Run a session using the `grilling` skill from `mattpocock-skills` and `/skill-creator` to reach a shared understanding of the skill the user wants to create or improve.
 
 When the shared understanding is confirmed:
 

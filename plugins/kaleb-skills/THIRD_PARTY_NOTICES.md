@@ -82,51 +82,6 @@ mode attempts to terminate existing listeners on the selected port; use static
 mode in a shared environment. Repository validation does not execute these
 bundled helpers or make model calls.
 
-## `grilling`
-
-- Source repository: `https://github.com/mattpocock/skills`
-- Reviewed commit: `d81f3a183412e71a5b1e84ca21bc1a35eea03a60`
-- Original source path: `skills/productivity/grilling/SKILL.md`
-- Copied file: `skills/grilling/SKILL.md`
-- Reviewed license path: `LICENSE`
-- Copyright notice:
-  `Copyright (c) 2026 Matt Pocock`
-- License status: MIT; `LICENSE` in this plugin reproduces the reviewed MIT
-  text from the source repository.
-
-## `grill-me`
-
-- Source repository: `https://github.com/mattpocock/skills`
-- Reviewed commit: `d81f3a183412e71a5b1e84ca21bc1a35eea03a60`
-- Original source path: `skills/productivity/grill-me/SKILL.md`
-- Copied file: `skills/grill-me/SKILL.md`
-- Reviewed license path: `LICENSE`
-- Copyright notice:
-  `Copyright (c) 2026 Matt Pocock`
-- License status: MIT; `LICENSE` in this plugin reproduces the reviewed MIT
-  text from the source repository.
-
-## `wizard`
-
-- Source repository: `https://github.com/mattpocock/skills`
-- Reviewed commit: `d81f3a183412e71a5b1e84ca21bc1a35eea03a60`
-- Original source directory: `skills/engineering/wizard/`
-- Copied files (relative paths preserved from the original directory):
-  - `skills/wizard/SKILL.md`
-  - `skills/wizard/template.sh`
-  - `skills/wizard/agents/openai.yaml`
-- Reviewed license path: `LICENSE` (the only applicable upstream license)
-- Copyright notice:
-  `Copyright (c) 2026 Matt Pocock`
-- License status: MIT; `LICENSE` in this plugin reproduces the reviewed MIT
-  text from the source repository.
-- All three files are unchanged frozen copies, including invocation settings.
-  `template.sh` is the skill's only relative file reference; no other skill is
-  required. Generated wizards use Bash and standard command-line utilities.
-  Browser opening uses an available platform opener or manual URL entry;
-  GitHub secret/variable writes use authenticated `gh` or report skipped writes.
-  `shellcheck` is optional. No upstream script was executed during inspection.
-
 ## `obsidian-cli`
 
 - Source repository: `https://github.com/kepano/obsidian-skills`

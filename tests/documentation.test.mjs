@@ -38,7 +38,7 @@ test("browse documentation excludes removed catalog items", async () => {
   const browseDocs = await read(["README.md", "CONTEXT.md", "docs/usage.md"]);
   for (const removed of [
     "cli-printing-press",
-    "mattpocock-skills",
+    "pstack",
     "grill-design",
     "oil-motion",
   ]) {

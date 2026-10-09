@@ -38,7 +38,7 @@
               {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["source", "url", "ref", "sha"],
+                "required": ["source", "url", "ref"],
                 "properties": {
                   "source": { "const": "url" },
                   "url": { "type": "string", "minLength": 1 },
@@ -52,7 +52,7 @@
               {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["source", "url", "path", "ref", "sha"],
+                "required": ["source", "url", "path", "ref"],
                 "properties": {
                   "source": { "const": "git-subdir" },
                   "url": { "type": "string", "minLength": 1 },

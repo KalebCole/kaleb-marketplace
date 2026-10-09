@@ -79,14 +79,13 @@ test("verifyExternalSource reports unavailable pinned content", async () => {
   );
 });
 
-test("verifyExternalSource checks pstack client manifests and license", async () => {
+test("verifyExternalSource checks Matt's tracked branch and package markers", async () => {
   const entry = {
-    name: "pstack",
+    name: "mattpocock-skills",
     source: {
-      source: "git-subdir",
-      url: "https://github.com/michael-denyer/pstack-claude.git",
-      path: "plugins/pstack",
-      sha,
+      source: "url",
+      url: "https://github.com/mattpocock/skills.git",
+      ref: "main",
     },
   };
   const requested = [];
@@ -100,10 +99,11 @@ test("verifyExternalSource checks pstack client manifests and license", async ()
   assert.deepEqual(
     requested.map((url) => new URL(url).pathname),
     [
-      `/repos/michael-denyer/pstack-claude/commits/${sha}`,
-      "/repos/michael-denyer/pstack-claude/contents/plugins/pstack/.claude-plugin/plugin.json",
-      "/repos/michael-denyer/pstack-claude/contents/plugins/pstack/.codex-plugin/plugin.json",
-      "/repos/michael-denyer/pstack-claude/contents/LICENSE",
+      "/repos/mattpocock/skills/commits/main",
+      "/repos/mattpocock/skills/contents/.claude-plugin/plugin.json",
+      "/repos/mattpocock/skills/contents/skills/engineering/grill-with-docs/SKILL.md",
+      "/repos/mattpocock/skills/contents/skills/productivity/grill-me/SKILL.md",
+      "/repos/mattpocock/skills/contents/LICENSE",
     ],
   );
 });

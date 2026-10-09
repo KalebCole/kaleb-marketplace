@@ -22,45 +22,6 @@ disable-model-invocation: true
 Restate your last message. Stop using jargon and speak coherently. State it more simply and concisely, like one human talking to another.
 `;
 
-const expectedGrillingSkill = `---
-name: grilling
-description: Grill the user relentlessly about a plan, decision, or idea. Use when the user wants to stress-test their thinking, or uses any 'grill' trigger phrases.
----
-
-Interview the user relentlessly until you reach a shared understanding. Map this as a **design tree**: every decision branches into the decisions that hang off it.
-
-Work the tree in **rounds**. The **frontier** is every decision whose prerequisites are already settled: the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask the whole frontier in one round: number each question and give your recommended answer. Then wait for the user's answers before the next round.
-
-Format a round like so:
-
-\`\`\`
-❓ **Q1** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
-
-➡️ <your recommended answer>
-
----
-
-❓ **Q2** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
-
-➡️ <your recommended answer>
-\`\`\`
-
-Each round the user answers reshapes the tree: settled decisions push the frontier outward and unblock questions that depended on them. Recompute the frontier and ask the next round. A question whose answer depends on another question still open in this round belongs to a _later_ round, not this one.
-
-Finding _facts_ is your job, never the user's. When a frontier question needs a fact from the environment (filesystem, tools, etc.), dispatch a sub-agent to find it; don't ask the user for anything you could look up yourself. Don't block on it: a running exploration is an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report; ask the rest of the frontier now. The _decisions_ are the user's: put each to them and wait.
-
-The session is done when the frontier is empty: every branch of the design tree visited, nothing left silently assumed. Do not act on it until the user confirms you have reached a shared understanding.
-`;
-
-const expectedGrillMeSkill = `---
-name: grill-me
-description: A relentless interview to sharpen a plan or design.
-disable-model-invocation: true
----
-
-Call the Skill tool with "grilling".
-`;
-
 const expectedMakeThisClearSkill = `---
 name: make-this-clear
 description: Rewrite a message from the recipient's perspective, assuming they have no prior context.
@@ -76,7 +37,7 @@ description: Grill the user on creating or improving a skill, then build and dog
 disable-model-invocation: true
 ---
 
-Run a \`/grilling\` session using \`/skill-creator\` to reach a shared understanding of the skill the user wants to create or improve.
+Run a session using the \`grilling\` skill from \`mattpocock-skills\` and \`/skill-creator\` to reach a shared understanding of the skill the user wants to create or improve.
 
 When the shared understanding is confirmed:
 
@@ -173,14 +134,11 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
 
   assert.deepEqual(skillDirectories, [
     "bro",
-    "grill-me",
-    "grilling",
     "make-this-clear",
     "obsidian-cli",
     "obsidian-markdown",
     "skill-creator",
     "skill-grill",
-    "wizard",
   ]);
 
   const manifest = JSON.parse(await readFile(path.join(pluginRoot, "plugin.json"), "utf8"));
@@ -190,8 +148,6 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
   const notices = await readFile(path.join(pluginRoot, "THIRD_PARTY_NOTICES.md"), "utf8");
   assert.match(notices, /dmmulroy\/skills/);
   assert.match(notices, /8603380821fee6a77c82639f364ce8fe4f5a92be/);
-  assert.match(notices, /mattpocock\/skills/);
-  assert.match(notices, /d81f3a183412e71a5b1e84ca21bc1a35eea03a60/);
   assert.match(notices, /kepano\/obsidian-skills/);
   assert.equal(
     (notices.match(/3ccff5338ea700537839b21900aa5358a0402c98/g) ?? []).length,
@@ -207,8 +163,6 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
 
   const expectedSkills = new Map([
     ["bro", expectedBroSkill],
-    ["grill-me", expectedGrillMeSkill],
-    ["grilling", expectedGrillingSkill],
     ["make-this-clear", expectedMakeThisClearSkill],
     ["skill-grill", expectedSkillGrill],
   ]);
@@ -238,7 +192,7 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
     assert.ok(frontmatter.description);
     if (expectedSkills.has(directoryName)) {
       assert.equal(skillDocument, expectedSkills.get(directoryName));
-    } else if (directoryName !== "wizard") {
+    } else {
       assert.equal(
         frontmatter.description,
         expectedDescriptions.get(directoryName),
@@ -281,61 +235,6 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
       expectedHash,
       `${relativePath} must match the reviewed upstream content`,
     );
-  }
-});
-
-test("Wizard preserves the complete frozen source, invocation settings, and provenance", async () => {
-  const wizardRoot = path.join(skillRoot, "wizard");
-  const expectedFiles = new Map([
-    ["SKILL.md", "bdf31d48211ea559878f95a4f344aeabf8d85897488ba564382bab0b000daac1"],
-    ["template.sh", "33cbe9dfb1d0e9185b60248a52aabed14bc64785a00cac695e302e739dd6c153"],
-    ["agents/openai.yaml", "98f44d682d58e262f160dc59a8befc365e0aa65820dd0261864af26aa8e59d83"],
-  ]);
-  assert.deepEqual((await readdir(wizardRoot)).sort(), ["SKILL.md", "agents", "template.sh"]);
-  assert.deepEqual(await readdir(path.join(wizardRoot, "agents")), ["openai.yaml"]);
-  for (const [relativePath, expectedHash] of expectedFiles) {
-    const content = await readFile(path.join(wizardRoot, relativePath));
-    assert.equal(
-      createHash("sha256").update(content).digest("hex"),
-      expectedHash,
-      `wizard/${relativePath} must match the reviewed upstream content`,
-    );
-  }
-
-  const document = await readFile(path.join(wizardRoot, "SKILL.md"), "utf8");
-  assert.deepEqual(parseFrontmatter(document), {
-    name: "wizard",
-    description: "Generate an interactive bash wizard that walks a human through steps only they can perform. Use when provisioning infrastructure, setting up credentials or CI secrets, walking an unfamiliar third-party dashboard, or running a one-off migration or cutover. Don't invoke this for steps the agent can perform itself.",
-  });
-  const agentMetadata = yaml.load(
-    await readFile(path.join(wizardRoot, "agents", "openai.yaml"), "utf8"),
-  );
-  assert.deepEqual(agentMetadata, {
-    interface: {
-      display_name: "Wizard",
-      short_description: "Generate an interactive setup wizard",
-    },
-  });
-  const relativeLinks = [...document.matchAll(/\]\((?!https?:\/\/)([^)]+)\)/g)]
-    .map((match) => match[1]);
-  assert.deepEqual(relativeLinks, ["template.sh"]);
-  for (const relativePath of relativeLinks) {
-    assert.ok(expectedFiles.has(relativePath), `${relativePath} must be included`);
-  }
-
-  const notices = await readFile(path.join(pluginRoot, "THIRD_PARTY_NOTICES.md"), "utf8");
-  const wizardNotice = notices.split("## `wizard`\n")[1]?.split("\n## ")[0];
-  assert.ok(wizardNotice, "Wizard must have its own provenance notice");
-  for (const expected of [
-    "https://github.com/mattpocock/skills",
-    "d81f3a183412e71a5b1e84ca21bc1a35eea03a60",
-    "skills/engineering/wizard/",
-    "Reviewed license path: `LICENSE`",
-    "Copyright (c) 2026 Matt Pocock",
-    "License status: MIT",
-    ...[...expectedFiles.keys()].map((file) => `skills/wizard/${file}`),
-  ]) {
-    assert.ok(wizardNotice.includes(expected), `Wizard notice must include ${expected}`);
   }
 });
 

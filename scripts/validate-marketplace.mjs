@@ -26,9 +26,10 @@ const externalMarkers = {
     "skills/i-have-adhd/SKILL.md",
     "LICENSE",
   ],
-  pstack: [
-    "plugins/pstack/.claude-plugin/plugin.json",
-    "plugins/pstack/.codex-plugin/plugin.json",
+  "mattpocock-skills": [
+    ".claude-plugin/plugin.json",
+    "skills/engineering/grill-with-docs/SKILL.md",
+    "skills/productivity/grill-me/SKILL.md",
     "LICENSE",
   ],
   "lavish-axi": ["plugin.json", "skills/lavish/SKILL.md", "LICENSE"],
@@ -146,12 +147,13 @@ export async function verifyExternalSource(entry, fetchImpl = fetch) {
   if (entry.source.source === "local") {
     return;
   }
-  if (!shaPattern.test(entry.source.sha)) {
-    throw new Error(`${entry.name} must use an exact 40-character pin`);
+  if (entry.source.sha !== undefined && !shaPattern.test(entry.source.sha)) {
+    throw new Error(`${entry.name} has an invalid 40-character pin`);
   }
+  const revision = entry.source.sha ?? entry.source.ref;
   const repo = githubRepo(entry.source.url);
   const headers = githubHeaders();
-  const commitUrl = `https://api.github.com/repos/${repo}/commits/${entry.source.sha}`;
+  const commitUrl = `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(revision)}`;
   await requireResponse(await fetchImpl(commitUrl, { headers }), entry, "commit");
 
   const markers = externalMarkers[entry.name];
@@ -161,7 +163,7 @@ export async function verifyExternalSource(entry, fetchImpl = fetch) {
   for (const marker of markers) {
     const markerUrl =
       `https://api.github.com/repos/${repo}/contents/${marker}` +
-      `?ref=${encodeURIComponent(entry.source.sha)}`;
+      `?ref=${encodeURIComponent(revision)}`;
     await requireResponse(await fetchImpl(markerUrl, { headers }), entry, marker);
   }
 }

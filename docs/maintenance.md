@@ -24,7 +24,7 @@ requests and pushes to `main`. The validation includes:
 - Agent Skills metadata and directory checks;
 - generated-file drift detection;
 - local license and notice checks;
-- exact external commit and package marker checks;
+- external revision and package marker checks;
 - Copilot catalog smoke validation;
 - Claude catalog validation when the Claude executable is available.
 
@@ -41,8 +41,10 @@ automation/update-<plugin-name>
 ```
 
 The job changes one canonical pin, regenerates both client catalogs, and runs
-full validation. It never auto-merges. Frozen local skill copies are outside
-this workflow.
+full validation. It never auto-merges. Matt Pocock's plugin tracks `main` and
+is outside pin update discovery; its published manifest and skill markers are
+checked against the current branch during validation. Frozen local skill copies
+are also outside this workflow.
 
 ## Native installer documentation
 
