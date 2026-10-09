@@ -203,6 +203,8 @@ Wall clock timing for a run. Located at `<run-dir>/timing.json`.
 ```json
 {
   "total_tokens": 84852,
+  "role": "executor",
+  "model": "explicit-model-id",
   "duration_ms": 23332,
   "total_duration_seconds": 23.3,
   "executor_start": "2026-01-15T10:30:00Z",
@@ -225,8 +227,11 @@ Output from Benchmark mode. Located at `benchmarks/<timestamp>/benchmark.json`.
   "metadata": {
     "skill_name": "pdf",
     "skill_path": "/path/to/pdf",
-    "executor_model": "claude-sonnet-4-20250514",
-    "analyzer_model": "most-capable-model",
+    "models": {
+      "executor": "explicit-executor-model",
+      "grader": "explicit-grader-model",
+      "analyzer": "explicit-analyzer-model"
+    },
     "timestamp": "2026-01-15T10:30:00Z",
     "evals_run": [1, 2, 3],
     "runs_per_configuration": 3
@@ -238,6 +243,10 @@ Output from Benchmark mode. Located at `benchmarks/<timestamp>/benchmark.json`.
       "eval_name": "Ocean",
       "configuration": "with_skill",
       "run_number": 1,
+      "models": {
+        "executor": "explicit-executor-model",
+        "grader": "explicit-grader-model"
+      },
       "result": {
         "pass_rate": 0.85,
         "passed": 6,
@@ -288,6 +297,7 @@ Output from Benchmark mode. Located at `benchmarks/<timestamp>/benchmark.json`.
 **Fields:**
 - `metadata`: Information about the benchmark run
   - `skill_name`: Name of the skill
+  - `models`: Explicit model ID for every evaluation role
   - `timestamp`: When the benchmark was run
   - `evals_run`: List of eval names or IDs
   - `runs_per_configuration`: Number of runs per config (e.g. 3)
@@ -296,6 +306,7 @@ Output from Benchmark mode. Located at `benchmarks/<timestamp>/benchmark.json`.
   - `eval_name`: Human-readable eval name (used as section header in the viewer)
   - `configuration`: Must be `"with_skill"` or `"without_skill"` (the viewer uses this exact string for grouping and color coding)
   - `run_number`: Integer run number (1, 2, 3...)
+  - `models`: Actual executor and grader model IDs for this run
   - `result`: Nested object with `pass_rate`, `passed`, `total`, `time_seconds`, `tokens`, `errors`
 - `run_summary`: Statistical aggregates per configuration
   - `with_skill` / `without_skill`: Each contains `pass_rate`, `time_seconds`, `tokens` objects with `mean` and `stddev` fields
