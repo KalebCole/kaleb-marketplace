@@ -17,10 +17,11 @@ license in `THIRD_PARTY_NOTICES.md`. Do not add an automatic updater.
 
 ## Maintained external plugin reference
 
-Add a native pinned source to `.agents/plugins/marketplace.json`. Do not copy
-the external package into this repository. Before listing it:
+Add a native source to `.agents/plugins/marketplace.json`. Existing external
+plugins use exact pins; Matt Pocock's plugin is the tracked-branch exception.
+Do not copy the external package into this repository. Before listing it:
 
-1. verify the exact commit exists;
+1. verify the commit or tracked branch exists;
 2. verify the package markers required by each target client;
 3. confirm every canonical source field has a safe generator mapping;
 4. regenerate both client catalogs;
@@ -45,6 +46,7 @@ guide. Do not create a wrapper to force a package into a client catalog.
 
 ## Review policy
 
-External update automation opens one pull request per changed plugin. A person
-reviews the source change and exact pin before merge. The workflow never
-auto-merges.
+External pin update automation opens one pull request per changed pinned
+plugin. A person reviews the source change and exact pin before merge. The
+workflow never auto-merges. Matt Pocock's tracked branch follows upstream
+through client marketplace refreshes.

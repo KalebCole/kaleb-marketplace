@@ -62,8 +62,15 @@ function validateSourceShape(plugin) {
   }
 
   if (source.source !== "local") {
-    if (!SHA_PATTERN.test(source.sha)) {
+    const tracksMatt = name === "mattpocock-skills"
+      && source.source === "url"
+      && githubRepo(source.url) === "mattpocock/skills"
+      && source.ref === "main";
+    if (source.sha === undefined && !tracksMatt) {
       throw new Error(`${name} must pin a 40-character lowercase sha`);
+    }
+    if (source.sha !== undefined && !SHA_PATTERN.test(source.sha)) {
+      throw new Error(`${name} must use a 40-character lowercase sha when pinned`);
     }
 
     if (typeof source.ref !== "string" || source.ref.length === 0) {
@@ -115,26 +122,31 @@ const mappings = {
     claude: ({ path: localPath }) => localPath,
   },
   url: {
-    copilot: ({ url, sha }) => ({
+    copilot: ({ url, ref, sha }) => ({
       source: "github",
       repo: githubRepo(url),
-      sha,
+      ...(sha ? { sha } : { ref }),
     }),
-    claude: ({ url, ref, sha }) => ({ source: "url", url, ref, sha }),
+    claude: ({ url, ref, sha }) => ({
+      source: "url",
+      url,
+      ref,
+      ...(sha ? { sha } : {}),
+    }),
   },
   "git-subdir": {
-    copilot: ({ url, path: subdirPath, sha }) => ({
+    copilot: ({ url, path: subdirPath, ref, sha }) => ({
       source: "github",
       repo: githubRepo(url),
       path: subdirPath,
-      sha,
+      ...(sha ? { sha } : { ref }),
     }),
     claude: ({ url, path: subdirPath, ref, sha }) => ({
       source: "git-subdir",
       url,
       path: subdirPath,
       ref,
-      sha,
+      ...(sha ? { sha } : {}),
     }),
   },
 };
@@ -293,7 +305,7 @@ async function fetchHeadShaForSource(source) {
 export async function findUpdates(catalog, fetchHead = fetchHeadShaForSource) {
   const include = [];
   for (const plugin of catalog.plugins) {
-    if (plugin.source.source === "local") {
+    if (plugin.source.source === "local" || plugin.source.sha === undefined) {
       continue;
     }
 
@@ -315,8 +327,8 @@ export function updatePin(catalog, name, sha) {
     if (plugin.name !== name) {
       return plugin;
     }
-    if (plugin.source.source === "local") {
-      throw new Error(`${name} is not external and cannot be updated`);
+    if (plugin.source.source === "local" || plugin.source.sha === undefined) {
+      throw new Error(`${name} has no reviewed pin to update`);
     }
     found = true;
     return {
@@ -365,7 +377,7 @@ async function runVerifySources(root) {
     if (plugin.source.source !== "local") {
       const repo = githubRepo(plugin.source.url);
       await getJson(
-        `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(plugin.source.sha)}`,
+        `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(plugin.source.sha ?? plugin.source.ref)}`,
       );
     }
   }
@@ -394,8 +406,8 @@ async function runUpdate(root, name) {
     if (!plugin) {
       throw new Error(`Unknown plugin: ${entry.name}`);
     }
-    if (plugin.source.source === "local") {
-      throw new Error(`${entry.name} is not external and cannot be updated`);
+    if (plugin.source.source === "local" || plugin.source.sha === undefined) {
+      throw new Error(`${entry.name} has no reviewed pin to update`);
     }
 
     const nextSha = await fetchHeadShaForSource(plugin.source);

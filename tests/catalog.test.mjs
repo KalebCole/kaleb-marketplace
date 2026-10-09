@@ -90,6 +90,29 @@ test("generateClaudeCatalog preserves external URL source details", () => {
   assert.equal("policy" in generated.plugins[0], false);
 });
 
+test("generators track Matt's upstream branch without a pin", () => {
+  const catalog = {
+    ...baseCatalog,
+    plugins: [{
+      name: "mattpocock-skills",
+      source: {
+        source: "url",
+        url: "https://github.com/mattpocock/skills.git",
+        ref: "main",
+      },
+      policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" },
+      category: "Developer Tools",
+    }],
+  };
+
+  assert.deepEqual(generateCopilotCatalog(catalog).plugins[0].source, {
+    source: "github", repo: "mattpocock/skills", ref: "main",
+  });
+  assert.deepEqual(generateClaudeCatalog(catalog).plugins[0].source, {
+    source: "url", url: "https://github.com/mattpocock/skills.git", ref: "main",
+  });
+});
+
 test("generators preserve a pinned external subdirectory for each client", () => {
   const catalog = {
     ...baseCatalog,

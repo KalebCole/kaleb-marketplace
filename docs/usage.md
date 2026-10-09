@@ -49,10 +49,32 @@ authentication and tool permissions.
 See the [OpenAI plugin guide](https://developers.openai.com/plugins/build/plugins)
 for marketplace registration, project trust, and hook requirements.
 
-The local package follows Agent Plugins 1.0. External entries use the native
-package layout at the exact commit in `.agents/plugins/marketplace.json`.
+The local package follows Agent Plugins 1.0. Most external entries use the
+native package layout at the exact commit in `.agents/plugins/marketplace.json`.
+Matt Pocock's plugin tracks his `main` branch so installed clients can receive
+his packaged skill updates.
 Successful validation for one client is not proof of support for another
 client.
+
+### Matt Pocock's skills
+
+The `mattpocock-skills` entry uses Matt's upstream plugin and its published
+skill list. It currently includes 27 skills. Skills under `skills/in-progress`
+and `skills/misc` are currently excluded from Matt's manifest and are not
+installed through this entry.
+
+For automatic updates, enable marketplace auto-update in Claude Code's
+Marketplaces tab. In Copilot CLI, set `autoUpdate: true` for
+`kaleb-marketplace` in your user-level `extraKnownMarketplaces` settings;
+repository settings cannot enable it. Matt's upstream guide says Codex refreshes
+his plugin at startup. If your Codex install does not, run
+`codex plugin marketplace upgrade kaleb-marketplace` and start a new session.
+Each client loads a new revision on its own schedule, so their versions can
+briefly differ.
+
+See [Matt's installation guide](https://github.com/mattpocock/skills#installation-30-second-setup),
+[Claude Code update settings](https://code.claude.com/docs/en/discover-plugins#keep-plugins-updated),
+and [Copilot CLI update settings](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference).
 
 ## Native installation
 
@@ -75,5 +97,6 @@ copilot plugin marketplace update kaleb-marketplace
 copilot plugin update --all
 ```
 
-A refreshed catalog can contain a reviewed external pin update. Frozen skill
-copies change only through a separate, explicit source-copy review.
+A refreshed catalog can contain a reviewed external pin update or a new
+revision of Matt Pocock's tracked branch. Frozen skill copies change only
+through a separate, explicit source-copy review.

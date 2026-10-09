@@ -13,9 +13,9 @@ fixed standard locations.
 _Avoid_: bundle, copied external repository
 
 **Maintained External Plugin Reference**:
-A catalog entry that keeps plugin content in the author's repository and pins
-one exact reviewed commit. Weekly automation can propose a new pin in a pull
-request.
+A catalog entry that keeps plugin content in the author's repository. Most
+entries pin a reviewed commit and receive weekly update proposals. Matt
+Pocock's plugin follows `main` to receive his packaged skill updates.
 _Avoid_: vendored plugin, automatic compatibility
 
 **Native External Installer**:
@@ -25,7 +25,7 @@ _Avoid_: catalog workaround, generated adapter
 
 **Canonical Catalog**:
 The hand-edited `.agents/plugins/marketplace.json` file. It records local
-paths and exact external Git pins in native marketplace source forms.
+paths and external Git sources in native marketplace forms.
 _Avoid_: entry file, private catalog model
 
 **Generated Client Catalog**:
@@ -50,6 +50,7 @@ _Avoid_: maintained external reference
 - `kaleb-skills` is the only Local Stored Plugin.
 - Humanizer, Visual Explainer, and i-have-adhd are Maintained External Plugin
   References.
+- Matt Pocock's published plugin follows his upstream branch and currently
+  supplies the 27 skills in his manifest.
 - Impeccable is documented through its Native External Installer.
-- Client catalogs contain only mappings that preserve the pinned native
-  package layout.
+- Client catalogs preserve each upstream plugin's native package layout.

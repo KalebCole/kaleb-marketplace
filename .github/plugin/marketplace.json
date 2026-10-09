@@ -42,12 +42,11 @@
       "category": "Productivity"
     },
     {
-      "name": "pstack",
+      "name": "mattpocock-skills",
       "source": {
         "source": "github",
-        "repo": "michael-denyer/pstack-claude",
-        "path": "plugins/pstack",
-        "sha": "55430ba22ccc751ab608422761aff14b2f063e5d"
+        "repo": "mattpocock/skills",
+        "ref": "main"
       },
       "category": "Developer Tools"
     },
