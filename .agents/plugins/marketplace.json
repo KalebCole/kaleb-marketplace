@@ -78,7 +78,7 @@
         "source": "url",
         "url": "https://github.com/kunchenguid/lavish-axi.git",
         "ref": "main",
-        "sha": "95cf540166d3d8a00e65ea9cd8bbd455016b028b"
+        "sha": "42c5691bd6807e0eced7316c85b155dccfeb0c50"
       },
       "policy": {
         "installation": "AVAILABLE",
