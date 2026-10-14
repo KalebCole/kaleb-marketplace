@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFile } from "node:child_process";
-import { copyFile, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -52,7 +52,19 @@ export function sourceDetails(section) {
     commit,
     sourceDir,
     licensePath,
+    branch: section.body.match(/^- Source branch: `([^`]+)`$/m)?.[1] ?? "main",
+    sourceName: section.body.match(/^- Source skill name: `([^`]+)`$/m)?.[1] ?? section.name,
   };
+}
+
+export function adaptSkillFile(file, content, source) {
+  if (file !== "SKILL.md" || source.sourceName === source.name) return content;
+  const text = content.toString("utf8");
+  const original = `---\nname: ${source.sourceName}\n`;
+  if (!text.startsWith(original)) {
+    throw new Error(`Missing source skill name in ${source.name}`);
+  }
+  return Buffer.from(text.replace(original, `---\nname: ${source.name}\n`));
 }
 
 async function listFiles(directory, prefix = "") {
@@ -71,19 +83,20 @@ async function listFiles(directory, prefix = "") {
   return files.sort();
 }
 
-async function replaceDirectory(source, destination) {
+async function replaceDirectory(source, destination, details) {
   const files = await listFiles(source);
   if (!files.includes("SKILL.md")) throw new Error(`Missing SKILL.md in ${source}`);
   await rm(destination, { recursive: true, force: true });
   for (const file of files) {
     const target = path.join(destination, file);
     await mkdir(path.dirname(target), { recursive: true });
-    await copyFile(path.join(source, file), target);
+    const content = await readFile(path.join(source, file));
+    await writeFile(target, adaptSkillFile(file, content, details));
   }
   return files;
 }
 
-async function sameDirectory(source, destination) {
+async function sameDirectory(source, destination, details) {
   const sourceFiles = await listFiles(source);
   const destinationFiles = await listFiles(destination);
   if (JSON.stringify(sourceFiles) !== JSON.stringify(destinationFiles)) return false;
@@ -92,7 +105,7 @@ async function sameDirectory(source, destination) {
       readFile(path.join(source, file)),
       readFile(path.join(destination, file)),
     ]);
-    if (!upstream.equals(stored)) return false;
+    if (!adaptSkillFile(file, upstream, details).equals(stored)) return false;
   }
   return true;
 }
@@ -117,22 +130,23 @@ export async function syncCopiedSkills({ dryRun = false } = {}) {
   try {
     const repositories = new Map();
     for (const source of sources) {
-      if (repositories.has(source.url)) continue;
+      const key = `${source.url}#${source.branch}`;
+      if (repositories.has(key)) continue;
       const checkout = path.join(tempRoot, String(repositories.size));
-      await run("git", ["clone", "--quiet", "--depth", "1", "--branch", "main", source.url, checkout]);
+      await run("git", ["clone", "--quiet", "--depth", "1", "--branch", source.branch, source.url, checkout]);
       const { stdout } = await run("git", ["-C", checkout, "rev-parse", "HEAD"]);
       const commit = stdout.trim();
       if (!shaPattern.test(commit)) throw new Error(`Invalid upstream commit for ${source.url}`);
-      repositories.set(source.url, { checkout, commit });
+      repositories.set(key, { checkout, commit });
     }
 
     for (const source of sources) {
-      const { checkout, commit } = repositories.get(source.url);
+      const { checkout, commit } = repositories.get(`${source.url}#${source.branch}`);
       if (commit === source.commit) continue;
 
       const upstreamSkill = path.join(checkout, source.sourceDir);
       const storedSkill = path.join(pluginRoot, "skills", source.name);
-      if (await sameDirectory(upstreamSkill, storedSkill)) continue;
+      if (await sameDirectory(upstreamSkill, storedSkill, source)) continue;
 
       await run("git", ["-C", checkout, "fetch", "--quiet", "--depth", "1", "origin", source.commit]);
       const { stdout: oldLicense } = await run("git", [
@@ -148,7 +162,7 @@ export async function syncCopiedSkills({ dryRun = false } = {}) {
       updates.push({ name: source.name, from: source.commit, to: commit, files });
       if (dryRun) continue;
 
-      await replaceDirectory(upstreamSkill, storedSkill);
+      await replaceDirectory(upstreamSkill, storedSkill, source);
       notices = notices.replace(source.body, updateSection(source, commit, files));
     }
 

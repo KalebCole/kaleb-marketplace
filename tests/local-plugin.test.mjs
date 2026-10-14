@@ -101,6 +101,7 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
 
   assert.deepEqual(skillDirectories, [
     "bro",
+    "find-context7-docs",
     "make-this-clear",
     "obsidian-cli",
     "obsidian-markdown",
@@ -116,6 +117,7 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
   assert.match(notices, /dmmulroy\/skills/);
   assert.match(notices, /8603380821fee6a77c82639f364ce8fe4f5a92be/);
   assert.match(notices, /kepano\/obsidian-skills/);
+  assert.match(notices, /upstash\/context7/);
   assert.equal(
     (notices.match(/3ccff5338ea700537839b21900aa5358a0402c98/g) ?? []).length,
     2,
@@ -124,9 +126,11 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
   assert.match(notices, /references\/CALLOUTS\.md/);
   assert.match(notices, /references\/EMBEDS\.md/);
   assert.match(notices, /references\/PROPERTIES\.md/);
+  assert.match(notices, /skills\/find-context7-docs\/SKILL\.md/);
 
   const license = await readFile(path.join(pluginRoot, "LICENSE"), "utf8");
-  assert.equal(license, expectedLicense);
+  assert.equal(license.slice(0, expectedLicense.length), expectedLicense);
+  assert.match(license, /Copyright \(c\) 2021 Upstash, Inc\./);
 
   const expectedSkills = new Map([
     ["make-this-clear", expectedMakeThisClearSkill],

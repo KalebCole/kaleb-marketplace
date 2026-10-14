@@ -14,6 +14,22 @@ This plugin contains frozen copies of reviewed upstream skill files.
 - License status: MIT; `LICENSE` in this plugin reproduces the reviewed MIT
   text from the source repository.
 
+## `find-context7-docs`
+
+- Source repository: `https://github.com/upstash/context7`
+- Source branch: `master`
+- Reviewed commit: `ef472a4912d594fdd193a5f929fab4c62796e287`
+- Original source path: `skills/find-docs/SKILL.md`
+- Source skill name: `find-docs`
+- Copied file: `skills/find-context7-docs/SKILL.md`
+- Reviewed license path: `LICENSE`
+- Copyright notice: `Copyright (c) 2021 Upstash, Inc.`
+- License status: MIT; `LICENSE` in this plugin reproduces the reviewed MIT
+  text from the source repository.
+- Local adjustment: frontmatter `name` changed from `find-docs` to
+  `find-context7-docs`. All other content is unchanged. The scheduled updater
+  preserves this rename when proposing upstream changes.
+
 ## `skill-creator`
 
 - Source repository: `https://github.com/anthropics/skills`
