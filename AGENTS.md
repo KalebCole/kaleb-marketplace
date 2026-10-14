@@ -19,8 +19,10 @@ clients. Keep changes focused on marketplace maintenance.
   `docs/usage.md` and `docs/contributing.md`.
 - Local plugins live under `plugins/<name>/` and must include the manifest,
   skills, license, and notices described in `docs/contributing.md`.
-- Pin external plugins to a reviewed 40-character commit SHA. The documented
-  `mattpocock-skills` `main` reference is the only current exception.
+- External plugins track their upstream branch so installed clients can
+  receive new releases when they refresh the marketplace.
+- The `kaleb-skills` entry tracks this repository's `main` branch; update its
+  copied skills through the scheduled source-copy PR before they reach clients.
 - When adding an external entry, add its required package markers to
   `scripts/validate-marketplace.mjs`.
 

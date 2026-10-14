@@ -1,4 +1,3 @@
-import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
@@ -8,7 +7,6 @@ const CANONICAL_CATALOG_PATH = ".agents/plugins/marketplace.json";
 const SCHEMA_PATH = "schemas/marketplace.schema.json";
 const COPILOT_OUTPUT_PATH = ".github/plugin/marketplace.json";
 const CLAUDE_OUTPUT_PATH = ".claude-plugin/marketplace.json";
-const SHA_PATTERN = /^[0-9a-f]{40}$/;
 const VALID_SOURCE_TYPES = new Set(["local", "url", "git-subdir"]);
 
 const ajv = new Ajv2020({ allErrors: true, strict: false });
@@ -62,17 +60,6 @@ function validateSourceShape(plugin) {
   }
 
   if (source.source !== "local") {
-    const tracksMatt = name === "mattpocock-skills"
-      && source.source === "url"
-      && githubRepo(source.url) === "mattpocock/skills"
-      && source.ref === "main";
-    if (source.sha === undefined && !tracksMatt) {
-      throw new Error(`${name} must pin a 40-character lowercase sha`);
-    }
-    if (source.sha !== undefined && !SHA_PATTERN.test(source.sha)) {
-      throw new Error(`${name} must use a 40-character lowercase sha when pinned`);
-    }
-
     if (typeof source.ref !== "string" || source.ref.length === 0) {
       throw new Error(`${name} must define a tracked ref`);
     }
@@ -122,31 +109,29 @@ const mappings = {
     claude: ({ path: localPath }) => localPath,
   },
   url: {
-    copilot: ({ url, ref, sha }) => ({
+    copilot: ({ url, ref }) => ({
       source: "github",
       repo: githubRepo(url),
-      ...(sha ? { sha } : { ref }),
+      ref,
     }),
-    claude: ({ url, ref, sha }) => ({
+    claude: ({ url, ref }) => ({
       source: "url",
       url,
       ref,
-      ...(sha ? { sha } : {}),
     }),
   },
   "git-subdir": {
-    copilot: ({ url, path: subdirPath, ref, sha }) => ({
+    copilot: ({ url, path: subdirPath, ref }) => ({
       source: "github",
       repo: githubRepo(url),
       path: subdirPath,
-      ...(sha ? { sha } : { ref }),
+      ref,
     }),
-    claude: ({ url, path: subdirPath, ref, sha }) => ({
+    claude: ({ url, path: subdirPath, ref }) => ({
       source: "git-subdir",
       url,
       path: subdirPath,
       ref,
-      ...(sha ? { sha } : {}),
     }),
   },
 };
@@ -295,67 +280,6 @@ async function getJson(url) {
   return response.json();
 }
 
-async function fetchHeadShaForSource(source) {
-  const repo = githubRepo(source.url);
-  const data = await getJson(`https://api.github.com/repos/${repo}/commits/${encodeURIComponent(source.ref)}`);
-  assert.equal(typeof data.sha, "string");
-  return data.sha;
-}
-
-export async function findUpdates(catalog, fetchHead = fetchHeadShaForSource) {
-  const include = [];
-  for (const plugin of catalog.plugins) {
-    if (plugin.source.source === "local" || plugin.source.sha === undefined) {
-      continue;
-    }
-
-    const sha = await fetchHead(plugin.source);
-    if (sha !== plugin.source.sha) {
-      include.push({ name: plugin.name });
-    }
-  }
-  return { include };
-}
-
-export function updatePin(catalog, name, sha) {
-  if (!SHA_PATTERN.test(sha)) {
-    throw new Error(`Invalid sha for ${name}: ${sha}`);
-  }
-
-  let found = false;
-  const plugins = catalog.plugins.map((plugin) => {
-    if (plugin.name !== name) {
-      return plugin;
-    }
-    if (plugin.source.source === "local" || plugin.source.sha === undefined) {
-      throw new Error(`${name} has no reviewed pin to update`);
-    }
-    found = true;
-    return {
-      ...plugin,
-      source: {
-        ...plugin.source,
-        sha,
-      },
-    };
-  });
-
-  if (!found) {
-    throw new Error(`Unknown plugin: ${name}`);
-  }
-
-  return {
-    ...catalog,
-    plugins,
-  };
-}
-
-async function writeCanonicalCatalog(root, catalog) {
-  const filePath = catalogPath(root, CANONICAL_CATALOG_PATH);
-  await ensureParentDir(filePath);
-  await writeFile(filePath, renderJson(catalog), "utf8");
-}
-
 async function runGenerate(root) {
   const catalog = await loadCanonicalCatalog(root);
   await writeGeneratedFiles(root, catalog);
@@ -377,58 +301,14 @@ async function runVerifySources(root) {
     if (plugin.source.source !== "local") {
       const repo = githubRepo(plugin.source.url);
       await getJson(
-        `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(plugin.source.sha ?? plugin.source.ref)}`,
+        `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(plugin.source.ref)}`,
       );
     }
   }
 }
 
-async function runCheckUpdates(root, { json = false } = {}) {
-  const catalog = await loadCanonicalCatalog(root);
-  const updates = await findUpdates(catalog);
-  if (json) {
-    console.log(JSON.stringify(updates));
-    return;
-  }
-
-  for (const entry of updates.include) {
-    console.log(entry.name);
-  }
-}
-
-async function runUpdate(root, name) {
-  const catalog = await loadCanonicalCatalog(root);
-  const updates = name ? { include: [{ name }] } : await findUpdates(catalog);
-  let nextCatalog = catalog;
-
-  for (const entry of updates.include) {
-    const plugin = nextCatalog.plugins.find((item) => item.name === entry.name);
-    if (!plugin) {
-      throw new Error(`Unknown plugin: ${entry.name}`);
-    }
-    if (plugin.source.source === "local" || plugin.source.sha === undefined) {
-      throw new Error(`${entry.name} has no reviewed pin to update`);
-    }
-
-    const nextSha = await fetchHeadShaForSource(plugin.source);
-    if (nextSha === plugin.source.sha) {
-      continue;
-    }
-
-    const repo = githubRepo(plugin.source.url);
-    await getJson(
-      `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(nextSha)}`,
-    );
-    console.log(`${entry.name}: ${plugin.source.sha} -> ${nextSha}`);
-    nextCatalog = updatePin(nextCatalog, entry.name, nextSha);
-  }
-
-  await writeCanonicalCatalog(root, nextCatalog);
-  await writeGeneratedFiles(root, nextCatalog);
-}
-
 async function main(argv = process.argv.slice(2), root = process.cwd()) {
-  const [command, option] = argv;
+  const [command] = argv;
 
   switch (command) {
     case "generate":
@@ -442,12 +322,6 @@ async function main(argv = process.argv.slice(2), root = process.cwd()) {
       return;
     case "verify-sources":
       await runVerifySources(root);
-      return;
-    case "check-updates":
-      await runCheckUpdates(root, { json: option === "--json" });
-      return;
-    case "update":
-      await runUpdate(root, option);
       return;
     default:
       throw new Error(`Unknown command: ${command ?? "<none>"}`);

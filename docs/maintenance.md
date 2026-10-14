@@ -30,21 +30,20 @@ requests and pushes to `main`. The validation includes:
 
 No result is described as proof of cross-client compatibility.
 
-## Weekly external updates
+## External updates
 
-`.github/workflows/update-external-pins.yml` runs each Monday and can also run
-manually. Discovery compares each tracked branch with its exact reviewed pin.
-Each changed plugin gets its own matrix job, branch, and pull request:
+Catalog entries track their source repositories' `main` branches, including
+`kaleb-skills` in this repository. Installed clients can receive new package
+revisions on a marketplace refresh. Repository validation checks that each
+tracked branch exists and still contains its required package markers. Frozen
+skill copies remain in this repository until their contents are updated here.
 
-```text
-automation/update-<plugin-name>
-```
-
-The job changes one canonical pin, regenerates both client catalogs, and runs
-full validation. It never auto-merges. Matt Pocock's plugin tracks `main` and
-is outside pin update discovery; its published manifest and skill markers are
-checked against the current branch during validation. Frozen local skill copies
-are also outside this workflow.
+`.github/workflows/sync-copied-skills.yml` runs each Tuesday and can run
+manually. It compares the copied skill directories with the current source
+repositories listed in `THIRD_PARTY_NOTICES.md`. When content changes and the
+source license is unchanged, it copies the new files, records their source
+commits, and opens a pull request for review. A license change stops the sync
+for manual review. The workflow does not merge its pull request.
 
 ## Native installer documentation
 

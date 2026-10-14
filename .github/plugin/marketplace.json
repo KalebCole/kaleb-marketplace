@@ -10,7 +10,12 @@
   "plugins": [
     {
       "name": "kaleb-skills",
-      "source": "./plugins/kaleb-skills",
+      "source": {
+        "source": "github",
+        "repo": "KalebCole/kaleb-marketplace",
+        "path": "plugins/kaleb-skills",
+        "ref": "main"
+      },
       "category": "Productivity"
     },
     {
@@ -18,7 +23,7 @@
       "source": {
         "source": "github",
         "repo": "blader/humanizer",
-        "sha": "225a6f39ac85f76ee48dbad772ea4abe4ed6c9d8"
+        "ref": "main"
       },
       "category": "Productivity"
     },
@@ -28,7 +33,7 @@
         "source": "github",
         "repo": "nicobailon/visual-explainer",
         "path": "plugins/visual-explainer",
-        "sha": "5846f5aef34a23c8fea389d2f23ce56224cbf840"
+        "ref": "main"
       },
       "category": "Productivity"
     },
@@ -37,7 +42,7 @@
       "source": {
         "source": "github",
         "repo": "ayghri/i-have-adhd",
-        "sha": "839872f9d1cd634fed642b4589ce7226199cc15f"
+        "ref": "main"
       },
       "category": "Productivity"
     },
@@ -55,7 +60,7 @@
       "source": {
         "source": "github",
         "repo": "kunchenguid/lavish-axi",
-        "sha": "95cf540166d3d8a00e65ea9cd8bbd455016b028b"
+        "ref": "main"
       },
       "category": "Productivity"
     }

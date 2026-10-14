@@ -11,8 +11,13 @@ import yaml from "js-yaml";
 import { loadCanonicalCatalog } from "./catalog.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const shaPattern = /^[0-9a-f]{40}$/;
 const externalMarkers = {
+  "kaleb-skills": [
+    "plugins/kaleb-skills/plugin.json",
+    "plugins/kaleb-skills/skills/bro/SKILL.md",
+    "plugins/kaleb-skills/LICENSE",
+    "plugins/kaleb-skills/THIRD_PARTY_NOTICES.md",
+  ],
   humanizer: [".claude-plugin/plugin.json", "SKILL.md", "LICENSE"],
   "visual-explainer": [
     "plugins/visual-explainer/.claude-plugin/plugin.json",
@@ -86,7 +91,9 @@ export async function validateLocalPlugins(repoRoot, catalog) {
   const validateManifest = new Ajv2020({ allErrors: true }).compile(schema);
 
   for (const entry of catalog.plugins.filter(
-    (plugin) => plugin.source.source === "local",
+    (plugin) => plugin.source.source === "local"
+      || (plugin.source.source === "git-subdir"
+        && plugin.source.url === "https://github.com/KalebCole/kaleb-marketplace.git"),
   )) {
     const pluginRoot = path.resolve(repoRoot, entry.source.path);
     await assertContained(repoRoot, pluginRoot);
@@ -138,7 +145,7 @@ function githubHeaders() {
 async function requireResponse(response, entry, target) {
   if (!response.ok) {
     throw new Error(
-      `${entry.name} at ${entry.source.sha}: ${target} is not available (${response.status} ${response.statusText})`,
+      `${entry.name} at ${entry.source.ref}: ${target} is not available (${response.status} ${response.statusText})`,
     );
   }
 }
@@ -147,10 +154,7 @@ export async function verifyExternalSource(entry, fetchImpl = fetch) {
   if (entry.source.source === "local") {
     return;
   }
-  if (entry.source.sha !== undefined && !shaPattern.test(entry.source.sha)) {
-    throw new Error(`${entry.name} has an invalid 40-character pin`);
-  }
-  const revision = entry.source.sha ?? entry.source.ref;
+  const revision = entry.source.ref;
   const repo = githubRepo(entry.source.url);
   const headers = githubHeaders();
   const commitUrl = `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(revision)}`;

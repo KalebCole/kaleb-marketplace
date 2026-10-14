@@ -13,9 +13,9 @@ fixed standard locations.
 _Avoid_: bundle, copied external repository
 
 **Maintained External Plugin Reference**:
-A catalog entry that keeps plugin content in the author's repository. Most
-entries pin a reviewed commit and receive weekly update proposals. Matt
-Pocock's plugin follows `main` to receive his packaged skill updates.
+A catalog entry that keeps plugin content in the author's repository. These
+entries follow their upstream `main` branches so client marketplace refreshes
+can receive packaged plugin updates.
 _Avoid_: vendored plugin, automatic compatibility
 
 **Native External Installer**:
@@ -34,20 +34,17 @@ Either `.github/plugin/marketplace.json` or
 Canonical Catalog and must not be edited by hand.
 _Avoid_: second source of truth
 
-**Reviewed Pin**:
-The exact 40-character commit stored in the Canonical Catalog after a person
-reviews and merges its update pull request.
-_Avoid_: latest version, floating branch
-
 **Frozen Skill Copy**:
 An intentionally stored skill whose source text, license, source repository,
-path, and copied commit are recorded in `THIRD_PARTY_NOTICES.md`. Automation
-does not update it.
+path, and copied commit are recorded in `THIRD_PARTY_NOTICES.md`. A scheduled
+job proposes source updates for review.
 _Avoid_: maintained external reference
 
 ## Current scope
 
-- `kaleb-skills` is the only Local Stored Plugin.
+- `kaleb-skills` is the only Local Stored Plugin. Its catalog entry tracks this
+  repository's `main` branch for package updates; its copied skills remain
+  frozen until changed in this repository.
 - Humanizer, Visual Explainer, and i-have-adhd are Maintained External Plugin
   References.
 - Matt Pocock's published plugin follows his upstream branch and currently

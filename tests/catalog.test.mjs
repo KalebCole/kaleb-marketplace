@@ -18,7 +18,6 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const scratchRoot = join(tmpdir(), "kaleb-marketplace-tests");
 const scriptPath = join(repoRoot, "scripts", "catalog.mjs");
 const validateScriptPath = join(repoRoot, "scripts", "validate-marketplace.sh");
-const sha = "0123456789012345678901234567890123456789";
 
 const baseCatalog = {
   name: "kaleb-marketplace",
@@ -64,7 +63,6 @@ test("generateClaudeCatalog preserves external URL source details", () => {
           source: "url",
           url: "https://github.com/example/tool.git",
           ref: "main",
-          sha,
         },
         policy: {
           installation: "AVAILABLE",
@@ -85,12 +83,11 @@ test("generateClaudeCatalog preserves external URL source details", () => {
     source: "url",
     url: "https://github.com/example/tool.git",
     ref: "main",
-    sha,
   });
   assert.equal("policy" in generated.plugins[0], false);
 });
 
-test("generators track Matt's upstream branch without a pin", () => {
+test("generators track an external upstream branch", () => {
   const catalog = {
     ...baseCatalog,
     plugins: [{
@@ -113,7 +110,7 @@ test("generators track Matt's upstream branch without a pin", () => {
   });
 });
 
-test("generators preserve a pinned external subdirectory for each client", () => {
+test("generators preserve a tracked external subdirectory for each client", () => {
   const catalog = {
     ...baseCatalog,
     plugins: [
@@ -124,7 +121,6 @@ test("generators preserve a pinned external subdirectory for each client", () =>
           url: "https://github.com/example/tools.git",
           path: "plugins/subdir-tool",
           ref: "main",
-          sha,
         },
         policy: {
           installation: "AVAILABLE",
@@ -143,7 +139,7 @@ test("generators preserve a pinned external subdirectory for each client", () =>
       source: "github",
       repo: "example/tools",
       path: "plugins/subdir-tool",
-      sha,
+      ref: "main",
     },
   );
   assert.deepEqual(
@@ -153,7 +149,6 @@ test("generators preserve a pinned external subdirectory for each client", () =>
       url: "https://github.com/example/tools.git",
       path: "plugins/subdir-tool",
       ref: "main",
-      sha,
     },
   );
 });
@@ -168,7 +163,6 @@ test("generateCopilotCatalog rejects unmappable external archive URLs", () => {
           source: "url",
           url: "https://example.com/tool/archive.tar.gz",
           ref: "main",
-          sha,
         },
         policy: {
           installation: "AVAILABLE",
@@ -205,7 +199,6 @@ test("validate rejects canonical external URLs that Copilot cannot map", async (
           source: "url",
           url: "https://example.com/tool.git",
           ref: "main",
-          sha,
         },
         policy: {
           installation: "AVAILABLE",

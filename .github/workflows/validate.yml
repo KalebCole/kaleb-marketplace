@@ -25,7 +25,7 @@ jobs:
       - name: Install Copilot CLI
         run: npm install --global @github/copilot
 
-      - name: Validate catalog and pinned installs
+      - name: Validate catalog and plugin installs
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: bash scripts/validate-marketplace.sh
