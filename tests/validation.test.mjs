@@ -10,7 +10,6 @@ import {
   verifyExternalSource,
 } from "../scripts/validate-marketplace.mjs";
 
-const sha = "0123456789012345678901234567890123456789";
 
 test("validateSkill rejects a frontmatter name that differs from its directory", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "kaleb-skill-"));
@@ -58,13 +57,13 @@ test("validateLocalPlugins requires a license", async () => {
   await assert.rejects(() => validateLocalPlugins(root, catalog), /LICENSE/);
 });
 
-test("verifyExternalSource reports unavailable pinned content", async () => {
+test("verifyExternalSource reports an unavailable tracked branch", async () => {
   const entry = {
     name: "humanizer",
     source: {
       source: "url",
       url: "https://github.com/blader/humanizer.git",
-      sha,
+      ref: "main",
     },
   };
   const notFound = async () => ({
@@ -75,7 +74,7 @@ test("verifyExternalSource reports unavailable pinned content", async () => {
 
   await assert.rejects(
     () => verifyExternalSource(entry, notFound),
-    /humanizer.*0123456.*not available/,
+    /humanizer.*main.*not available/,
   );
 });
 

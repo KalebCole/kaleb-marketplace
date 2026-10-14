@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -12,15 +11,6 @@ const pluginRoot = path.join(repoRoot, "plugins", "kaleb-skills");
 const skillRoot = path.join(pluginRoot, "skills");
 const AGENT_PLUGIN_SCHEMA =
   "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json";
-
-const expectedBroSkill = `---
-name: bro
-description: Restate the last message in plain human language, with no jargon.
-disable-model-invocation: true
----
-
-Restate your last message. Stop using jargon and speak coherently. State it more simply and concisely, like one human talking to another.
-`;
 
 const expectedMakeThisClearSkill = `---
 name: make-this-clear
@@ -97,29 +87,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 `;
 
-const obsidianSkillFiles = new Map([
-  [
-    "obsidian-cli/SKILL.md",
-    "b54257cdc0e5d04488b35b0c797bfe427b24359f0848d3c73924dcacf8da6358",
-  ],
-  [
-    "obsidian-markdown/SKILL.md",
-    "7ad72e1f0a9081ed325e76b6402ad5de50a00e63e2341fd403a92f147234a007",
-  ],
-  [
-    "obsidian-markdown/references/CALLOUTS.md",
-    "9912ec2e3f8711f65b8ceb82cc19cbffc5e6f8ccf2ab627e18926c522c383d8b",
-  ],
-  [
-    "obsidian-markdown/references/EMBEDS.md",
-    "63b6205507e28fb58cf200bc348a2b139e50ae739743e2e6316732148973cb7a",
-  ],
-  [
-    "obsidian-markdown/references/PROPERTIES.md",
-    "392953b5838c3ab3df135b5a914f100ae7b95e4501b6a2e5c8dc63da3ac7558b",
-  ],
-]);
-
 function parseFrontmatter(document) {
   const match = document.match(/^---\n([\s\S]*?)\n---\n/);
   assert.ok(match, "skill file must begin with YAML frontmatter");
@@ -162,23 +129,8 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
   assert.equal(license, expectedLicense);
 
   const expectedSkills = new Map([
-    ["bro", expectedBroSkill],
     ["make-this-clear", expectedMakeThisClearSkill],
     ["skill-grill", expectedSkillGrill],
-  ]);
-  const expectedDescriptions = new Map([
-    [
-      "obsidian-cli",
-      "Interact with Obsidian vaults using the Obsidian CLI to read, create, search, and manage notes, tasks, properties, and more. Also supports plugin and theme development with commands to reload plugins, run JavaScript, capture errors, take screenshots, and inspect the DOM. Use when the user asks to interact with their Obsidian vault, manage notes, search vault content, perform vault operations from the command line, or develop and debug Obsidian plugins and themes.",
-    ],
-    [
-      "obsidian-markdown",
-      "Create and edit Obsidian Flavored Markdown with wikilinks, embeds, callouts, properties, and other Obsidian-specific syntax. Use when working with .md files in Obsidian, or when the user mentions wikilinks, callouts, frontmatter, tags, embeds, or Obsidian notes.",
-    ],
-    [
-      "skill-creator",
-      "Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy.",
-    ],
   ]);
 
   for (const directoryName of skillDirectories) {
@@ -192,11 +144,6 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
     assert.ok(frontmatter.description);
     if (expectedSkills.has(directoryName)) {
       assert.equal(skillDocument, expectedSkills.get(directoryName));
-    } else {
-      assert.equal(
-        frontmatter.description,
-        expectedDescriptions.get(directoryName),
-      );
     }
   }
 
@@ -221,21 +168,15 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
   )
     .flat()
     .sort();
-  assert.deepEqual(actualObsidianFiles, [...obsidianSkillFiles.keys()].sort());
+  for (const file of actualObsidianFiles) {
+    assert.ok(notices.includes(`\`skills/${file}\``), `${file} must appear in notices`);
+  }
 
   assert.deepEqual(
     await readdir(path.join(skillRoot, "skill-grill")),
     ["SKILL.md"],
   );
 
-  for (const [relativePath, expectedHash] of obsidianSkillFiles) {
-    const content = await readFile(path.join(skillRoot, relativePath));
-    assert.equal(
-      createHash("sha256").update(content).digest("hex"),
-      expectedHash,
-      `${relativePath} must match the reviewed upstream content`,
-    );
-  }
 });
 
 test("skill-grill keeps model invocation disabled and omits user-invocable", async () => {

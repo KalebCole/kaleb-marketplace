@@ -49,10 +49,11 @@ authentication and tool permissions.
 See the [OpenAI plugin guide](https://developers.openai.com/plugins/build/plugins)
 for marketplace registration, project trust, and hook requirements.
 
-The local package follows Agent Plugins 1.0. Most external entries use the
-native package layout at the exact commit in `.agents/plugins/marketplace.json`.
-Matt Pocock's plugin tracks his `main` branch so installed clients can receive
-his packaged skill updates.
+The stored `kaleb-skills` package follows Agent Plugins 1.0 and tracks this
+repository's `main` branch. Other catalog entries track their upstream `main`
+branches. Installed clients can receive new package revisions when they refresh
+the marketplace. The copied third-party skills inside `kaleb-skills` change
+when a proposed source-copy update is merged into this repository.
 Successful validation for one client is not proof of support for another
 client.
 
@@ -63,7 +64,8 @@ skill list. It currently includes 27 skills. Skills under `skills/in-progress`
 and `skills/misc` are currently excluded from Matt's manifest and are not
 installed through this entry.
 
-For automatic updates, enable marketplace auto-update in Claude Code's
+For automatic updates to tracked plugins, enable marketplace auto-update in
+Claude Code's
 Marketplaces tab. In Copilot CLI, set `autoUpdate: true` for
 `kaleb-marketplace` in your user-level `extraKnownMarketplaces` settings;
 repository settings cannot enable it. Matt's upstream guide says Codex refreshes
@@ -97,6 +99,7 @@ copilot plugin marketplace update kaleb-marketplace
 copilot plugin update --all
 ```
 
-A refreshed catalog can contain a reviewed external pin update or a new
-revision of Matt Pocock's tracked branch. Frozen skill copies change only
-through a separate, explicit source-copy review.
+A marketplace refresh can pick up a new revision of any tracked branch,
+including this repository's `kaleb-skills` package. Its copied third-party
+skills change only through a separate, explicit source-copy review. The
+scheduled job proposes updates to those copies in pull requests.

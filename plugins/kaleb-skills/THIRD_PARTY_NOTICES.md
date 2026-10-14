@@ -50,8 +50,8 @@ This plugin contains frozen copies of reviewed upstream skill files.
   license override was present at the reviewed commit. Other upstream skills
   have different terms and are not included.
 - Local adjustments: none. All 18 files, including invocation metadata, are
-  unchanged. This is a frozen skill copy, not an external catalog reference or
-  an automatically updated source.
+  unchanged. This frozen skill copy changes when a reviewed source-copy pull
+  request is merged.
 
 ### Runtime dependencies and support boundaries
 

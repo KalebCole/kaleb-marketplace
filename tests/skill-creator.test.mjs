@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -10,27 +9,18 @@ import yaml from "js-yaml";
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pluginRoot = path.join(repoRoot, "plugins", "kaleb-skills");
 const skillRoot = path.join(pluginRoot, "skills", "skill-creator");
-const upstreamCommit = "8a1541c4a3ffa5a20a5a91de0dcf3f0bab1d1ef4";
-const reviewedFiles = new Map([
-  ["LICENSE.txt", "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362"],
-  ["SKILL.md", "dcd4803e61e913e6fc27294184cd3a71f09f5e924ff20c8a9a20173e7b3c2bcf"],
-  ["agents/analyzer.md", "bf68f4cac5a56c673a928c2e6d619586c5b93ea364026ab37547772cb45a663a"],
-  ["agents/comparator.md", "fe1fc9787c495d864c5d6eada47396478572325fde1b33a96d78bf4b849b7a3e"],
-  ["agents/grader.md", "57134da0c1a4eea33fbd74a1c9c44aa814f07d6bc64de303edb586f941e5d21a"],
-  ["assets/eval_review.html", "ce477dcc74dc1c0d1d3352646a79167b5a63634e936b1019160025065974e452"],
-  ["eval-viewer/generate_review.py", "fc9d1b9243fe5ab6012ebd579bd76d0035de1b79fd3b969de114defab26478fb"],
-  ["eval-viewer/viewer.html", "a53213426ee1100441d701a3a0d49cda7a842f992d2c36463f4d3cc0258575fa"],
-  ["references/schemas.md", "8e8876180a8989b406a4d3edddf875b04cdfd5805cc8616686d552b11ce4455f"],
-  ["scripts/__init__.py", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"],
-  ["scripts/aggregate_benchmark.py", "123ef128ea5ccc01a4b1ac212ef5567f21e9c13d3d240609780beeb3200c49aa"],
-  ["scripts/generate_report.py", "13df7118a3c50c83c4c3250a606d5f2b20b25a3d44cbc392b3d669ec75281453"],
-  ["scripts/improve_description.py", "87d864570220b699fac52da309d2d6efdb060647bfebc74f768128e646accf80"],
-  ["scripts/package_skill.py", "1a33059b0db1ef73375d46d513e5ea81369d2e8838c970597b0d52ddef8d1c0f"],
-  ["scripts/quick_validate.py", "67cf5703402013936c8fb75ad6a1afecd8841d45cc5e606b634eb05825fde365"],
-  ["scripts/run_eval.py", "43e3b8f80dbf69c343967ba77e268fae991d9fa3ed68b32a0ff02532cd48657f"],
-  ["scripts/run_loop.py", "7bd6f674203168520517eec94c55f493c0d154339b061b4d7c0f0dad187d0f21"],
-  ["scripts/utils.py", "3af8ae62c40c73ab712207436a0d9a981e845f25c5a7040229eb189cc8e45bb1"],
-]);
+
+async function provenance() {
+  const notices = await readFile(path.join(pluginRoot, "THIRD_PARTY_NOTICES.md"), "utf8");
+  const section = notices.split("## `skill-creator`\n")[1]?.split(/\n## /)[0];
+  assert.ok(section, "skill-creator must have its own provenance section");
+  const commit = section.match(/Reviewed commit: `([0-9a-f]{40})`/)?.[1];
+  assert.ok(commit, "skill-creator must record its source commit");
+  const files = [...section.matchAll(/^  - `skills\/skill-creator\/([^`]+)`$/gm)]
+    .map((match) => match[1]);
+  assert.ok(files.length > 0, "skill-creator must list its copied files");
+  return { section, commit, files };
+}
 
 async function listFiles(directory, relative = "") {
   const files = await Promise.all(
@@ -47,32 +37,23 @@ async function listFiles(directory, relative = "") {
   return files.flat().sort();
 }
 
-test("skill-creator preserves the complete reviewed upstream directory", async () => {
-  assert.deepEqual(await listFiles(skillRoot), [...reviewedFiles.keys()].sort());
-  await Promise.all(
-    [...reviewedFiles].map(async ([file, expectedHash]) => {
-      const content = await readFile(path.join(skillRoot, file));
-      assert.equal(
-        createHash("sha256").update(content).digest("hex"),
-        expectedHash,
-        `${file} must match the reviewed upstream content`,
-      );
-    }),
-  );
+test("skill-creator files match the recorded source inventory", async () => {
+  const { files } = await provenance();
+  assert.deepEqual(await listFiles(skillRoot), files.sort());
 });
 
-test("skill-creator keeps upstream invocation metadata unchanged", async () => {
+test("skill-creator keeps valid invocation metadata", async () => {
   const document = await readFile(path.join(skillRoot, "SKILL.md"), "utf8");
   const match = document.match(/^---\n([\s\S]*?)\n---\n/);
   assert.ok(match, "skill must begin with YAML frontmatter");
-  assert.deepEqual(yaml.load(match[1]), {
-    name: "skill-creator",
-    description:
-      "Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy.",
-  });
+  const metadata = yaml.load(match[1]);
+  assert.equal(metadata.name, "skill-creator");
+  assert.ok(metadata.description);
 });
 
 test("skill-creator support references and local Python imports are included", async () => {
+  const { files } = await provenance();
+  const reviewedFiles = new Set(files);
   const document = await readFile(path.join(skillRoot, "SKILL.md"), "utf8");
   const supportReferences = [
     ...document.matchAll(/`((?:agents|references|assets|eval-viewer)\/[^`]+\.(?:md|html|py))`/g),
@@ -90,7 +71,7 @@ test("skill-creator support references and local Python imports are included", a
     assert.ok(reviewedFiles.has(`${module.replaceAll(".", "/")}.py`));
   }
 
-  for (const file of [...reviewedFiles.keys()].filter((file) => file.endsWith(".py"))) {
+  for (const file of [...reviewedFiles].filter((file) => file.endsWith(".py"))) {
     const source = await readFile(path.join(skillRoot, file), "utf8");
     for (const match of source.matchAll(/^from (scripts\.[a-z_]+) import /gm)) {
       assert.ok(
@@ -116,14 +97,12 @@ test("skill-creator support references and local Python imports are included", a
 });
 
 test("skill-creator records exact provenance and its directory-specific license", async () => {
-  const notices = await readFile(path.join(pluginRoot, "THIRD_PARTY_NOTICES.md"), "utf8");
-  const section = notices.split("## `skill-creator`\n")[1]?.split(/\n## /)[0];
-  assert.ok(section, "skill-creator must have its own provenance section");
+  const { section, commit, files } = await provenance();
   for (const text of [
     "Source repository: `https://github.com/anthropics/skills`",
-    `Reviewed commit: \`${upstreamCommit}\``,
+    `Reviewed commit: \`${commit}\``,
     "Original source path: `skills/skill-creator/`",
-    `https://github.com/anthropics/skills/tree/${upstreamCommit}/skills/skill-creator`,
+    `https://github.com/anthropics/skills/tree/${commit}/skills/skill-creator`,
     "Reviewed license path: `skills/skill-creator/LICENSE.txt`",
     "Copyright 2026 Anthropic, PBC.",
     "Apache-2.0",
@@ -138,7 +117,7 @@ test("skill-creator records exact provenance and its directory-specific license"
   ]) {
     assert.ok(section.includes(text), `provenance must include ${text}`);
   }
-  for (const file of reviewedFiles.keys()) {
+  for (const file of files) {
     assert.ok(section.includes(`\`skills/skill-creator/${file}\``), `${file} must be documented`);
   }
 

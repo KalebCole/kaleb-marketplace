@@ -1,0 +1,65 @@
+name: Sync copied skills
+
+on:
+  schedule:
+    - cron: "23 10 * * 2"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-copied-skills
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Copy changed upstream skills
+        run: node scripts/sync-copied-skills.mjs
+
+      - name: Open or update pull request
+        if: ${{ success() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- plugins/kaleb-skills; then
+            echo "No copied skills changed"
+            exit 0
+          fi
+
+          branch="automation/sync-copied-skills"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add plugins/kaleb-skills/skills plugins/kaleb-skills/THIRD_PARTY_NOTICES.md
+          git commit -m "chore: sync copied skills from upstream"
+          git fetch origin "$branch" || true
+          git push --force-with-lease origin "HEAD:$branch"
+
+          if [[ -z "$(gh pr list --head "$branch" --json number --jq '.[0].number')" ]]; then
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "chore: sync copied skills from upstream" \
+              --body "Copies changed skill files from their source repositories and records the source commits. Review the copied content and license notices before merging."
+          fi
+
+      - run: npm ci
+        if: ${{ success() }}
+
+      - name: Validate copied package
+        if: ${{ success() }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash scripts/validate-marketplace.sh
