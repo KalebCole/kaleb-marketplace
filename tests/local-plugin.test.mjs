@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -101,6 +102,7 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
 
   assert.deepEqual(skillDirectories, [
     "bro",
+    "create-skill",
     "find-context7-docs",
     "make-this-clear",
     "obsidian-cli",
@@ -127,6 +129,11 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
   assert.match(notices, /references\/EMBEDS\.md/);
   assert.match(notices, /references\/PROPERTIES\.md/);
   assert.match(notices, /skills\/find-context7-docs\/SKILL\.md/);
+  assert.match(notices, /obra\/superpowers/);
+  assert.match(notices, /5bf4e78011075bcfc0dc295f0724994cd123ee71/);
+  assert.match(notices, /mattpocock\/skills/);
+  assert.match(notices, /3f599139104dfceabc7754eeb91319802f85e042/);
+  assert.match(notices, /Copyright \(c\) 2025 Jesse Vincent/);
 
   const license = await readFile(path.join(pluginRoot, "LICENSE"), "utf8");
   assert.equal(license.slice(0, expectedLicense.length), expectedLicense);
@@ -181,6 +188,27 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
     ["SKILL.md"],
   );
 
+  assert.deepEqual(
+    (await readdir(path.join(skillRoot, "create-skill", "references"))).sort(),
+    [
+      "anthropic-best-practices.md",
+      "mermaid-conventions.md",
+      "sources.md",
+      "tdd.md",
+    ],
+  );
+  const anthropicReference = await readFile(
+    path.join(
+      skillRoot,
+      "create-skill",
+      "references",
+      "anthropic-best-practices.md",
+    ),
+  );
+  assert.equal(
+    createHash("sha256").update(anthropicReference).digest("hex"),
+    "fd22568d2460d0bfd37783420d2cec18cd3813f8f2a74eb72804c0e8026069c3",
+  );
 });
 
 test("skill-grill keeps model invocation disabled and omits user-invocable", async () => {
