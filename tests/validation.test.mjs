@@ -106,3 +106,33 @@ test("verifyExternalSource checks Matt's tracked branch and package markers", as
     ],
   );
 });
+
+test("verifyExternalSource checks goal-prompt's plugin and formatter", async () => {
+  const entry = {
+    name: "goal-prompt",
+    source: {
+      source: "git-subdir",
+      url: "https://github.com/trailofbits/skills.git",
+      path: "plugins/goal-prompt",
+      ref: "main",
+    },
+  };
+  const requested = [];
+  const available = async (url) => {
+    requested.push(url);
+    return { ok: true };
+  };
+
+  await verifyExternalSource(entry, available);
+
+  assert.deepEqual(
+    requested.map((url) => new URL(url).pathname),
+    [
+      "/repos/trailofbits/skills/commits/main",
+      "/repos/trailofbits/skills/contents/plugins/goal-prompt/.claude-plugin/plugin.json",
+      "/repos/trailofbits/skills/contents/plugins/goal-prompt/skills/goal-prompt/SKILL.md",
+      "/repos/trailofbits/skills/contents/plugins/goal-prompt/skills/goal-prompt/scripts/format_goal_prompt.py",
+      "/repos/trailofbits/skills/contents/LICENSE",
+    ],
+  );
+});

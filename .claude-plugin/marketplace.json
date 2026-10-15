@@ -62,6 +62,16 @@
         "ref": "main"
       },
       "category": "Productivity"
+    },
+    {
+      "name": "goal-prompt",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/trailofbits/skills.git",
+        "path": "plugins/goal-prompt",
+        "ref": "main"
+      },
+      "category": "Productivity"
     }
   ]
 }

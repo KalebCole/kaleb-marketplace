@@ -38,6 +38,12 @@ const externalMarkers = {
     "LICENSE",
   ],
   "lavish-axi": ["plugin.json", "skills/lavish/SKILL.md", "LICENSE"],
+  "goal-prompt": [
+    "plugins/goal-prompt/.claude-plugin/plugin.json",
+    "plugins/goal-prompt/skills/goal-prompt/SKILL.md",
+    "plugins/goal-prompt/skills/goal-prompt/scripts/format_goal_prompt.py",
+    "LICENSE",
+  ],
 };
 
 function githubRepo(url) {
