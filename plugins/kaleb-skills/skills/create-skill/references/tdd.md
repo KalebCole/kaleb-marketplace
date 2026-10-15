@@ -1,119 +1,163 @@
-# Test-Driven Development
+# Test-Driven Skill Authoring
 
-> This optional reference applies to software test-driven development (TDD).
-> It does not govern how skills must be authored or validated.
+This reference adapts Superpowers test-driven development (TDD) to skill
+authoring. See [sources.md](sources.md) for the pinned source, copyright notice,
+and MIT license terms.
 
-TDD uses a red-to-green loop. First write a test that fails for the expected
-reason. Then write only enough production code to make that test pass.
+## Overview
 
-This reference is adapted from Matt Pocock's `tdd` skill. See
-[sources.md](sources.md) for the reviewed source, copyright notice, and MIT
-license terms.
+Write the scenario first. Watch the agent fail without the new guidance. Write
+the minimum skill content that corrects the failure.
 
-## What a Good Test Is
+**Core principle:** If you did not observe the relevant failure, you do not know
+whether the skill teaches the right thing.
 
-Tests verify behavior through public interfaces, not implementation details.
-Code can change completely while correct tests continue to pass.
+## TDD Mapping
 
-A good test:
+| Software TDD | Skill authoring |
+|---|---|
+| Test case | Realistic agent scenario |
+| Production code | `SKILL.md` and bundled resources |
+| RED | Agent fails without the new or changed guidance |
+| GREEN | Agent succeeds with the guidance |
+| REFACTOR | Simplify wording and close observed gaps while scenarios pass |
 
-- reads like a behavior specification;
-- uses the public interface;
-- fails when that behavior breaks;
-- uses an independent expected result; and
-- ignores internal structure.
+## When to Use
 
-Avoid a **tautological test**. This is a test that calculates the expected
-result in the same way as the code. It can pass by construction and fail to
-detect a defect.
+Use this method for:
 
-## Seams: Where Tests Go
+- new skills;
+- behavior-changing edits;
+- fixes for skill behavior that failed in use; and
+- refactoring after the skill is green.
 
-A **seam** is the public boundary where a test supplies input and observes
-behavior without reaching into internals.
+A factual correction can use a focused check that proves the old fact is wrong
+and the new fact is correct.
 
-Examples:
+## RED: Write a Failing Scenario
 
-- an exported function;
-- an HTTP endpoint;
-- a command-line interface;
-- a rendered user interaction;
-- a message or event boundary; or
-- a file operation through the application's public service.
+Write one minimal scenario that shows the required behavior.
 
-Agree on the important seams before writing tests. For each proposed seam,
-state what it detects and what it misses. Use the narrowest public seam that
-proves the behavior.
+A good scenario:
 
-## Vertical Slices
+- uses a realistic user request;
+- has one main behavior;
+- states objective success criteria;
+- includes only the context a real agent would have; and
+- can fail for the reason the skill must correct.
 
-Work in vertical slices:
+Run it without the new guidance:
 
-1. choose one behavior at one public seam;
-2. write one test;
-3. run it and confirm the intended failure;
-4. write the smallest implementation that passes;
-5. run the relevant checks; and
-6. choose the next behavior from what the last cycle taught you.
-
-The first slice is a **tracer bullet**. This is a thin end-to-end path that
-proves the main parts connect.
-
-Do not use horizontal slicing. Horizontal slicing means writing all tests first
-and then all implementation. Bulk tests often verify imagined structure
-instead of user-visible behavior.
-
-## Anti-Patterns
-
-- **Implementation-coupled:** Tests mock internal collaborators, call private
-  methods, or inspect a side channel. They fail after harmless refactoring.
-- **Tautological:** The assertion derives its expected result in the same way
-  as the implementation.
-- **Horizontal slicing:** All tests are written before any working vertical
-  path.
-- **Speculative implementation:** Code is added for a future test.
-- **Mock-only evidence:** A test proves calls between mocks but not useful
-  behavior.
-
-Expected values must come from an independent source, such as a known literal,
-a worked example, or the specification.
-
-## Rules of the Loop
-
-- **Red before green.** Write the failing test first. Confirm it fails for the
-  intended reason.
-- **One slice at a time.** Use one seam, one test, and one minimal
-  implementation per cycle.
-- **No speculative features.** Do not add code for a test that does not exist.
-- **Review after green.** Refactor only with tests passing.
-
-```mermaid
-flowchart LR
-    A[Choose one observable behavior] --> B[Write one test at a public seam]
-    B --> C[Run the test]
-    C --> D{Fails for the intended reason?}
-    D -- No --> E[Fix the test or setup]
-    E --> C
-    D -- Yes --> F[Write minimal production code]
-    F --> G[Run relevant tests]
-    G --> H{Green?}
-    H -- No --> F
-    H -- Yes --> I[Select the next vertical slice]
-    I --> A
-```
-
-Red before green is specific to the software TDD method in this reference. It
-does not require a failing baseline before a skill is created or edited.
-
-## Verification
+- for a new skill, run without that skill;
+- for an edit, run with the current version;
+- for a factual correction, query or validate the old fact.
 
 Confirm:
 
-- each new behavior has a meaningful test;
-- each test was observed failing for the intended reason;
-- tests use stable public seams where practical;
-- expected values have an independent source;
-- the implementation contains no speculative features;
-- relevant regression tests pass; and
-- test names use the project's domain language.
+- the scenario fails;
+- the failure is relevant;
+- the failure is not caused by missing setup or an unclear prompt; and
+- the evidence records what the agent did, not only the final answer.
 
+Record the failure, relevant decisions, and observed output. A statement that
+the scenario "did not work" is not enough evidence.
+
+If the scenario already passes, improve the scenario or stop. Do not add
+guidance for a failure you cannot reproduce.
+
+## GREEN: Write the Minimum Skill
+
+Change only enough guidance to make the failing scenario pass.
+
+Prefer:
+
+- a clear positive procedure for output-shape failures;
+- a required field for omitted content;
+- a condition tied to an observable fact for branching behavior;
+- a direct reference for missing information; and
+- a firm rule only when the agent knows the right action but skips it.
+
+Run the same scenario with the changed skill. Confirm the target behavior now
+passes and existing scenarios still pass.
+
+Before completion, run the complete relevant scenario suite and the
+repository's full validation command. A passing target scenario is not a green
+suite. Report each remaining failure by name.
+
+Do not add instructions for hypothetical future failures.
+
+## REFACTOR: Improve Without Changing Behavior
+
+After GREEN:
+
+- remove duplicate wording;
+- improve names and headings;
+- move optional detail to references;
+- shorten examples;
+- replace runtime-specific terms with capabilities; and
+- add a new scenario for each new gap you observed.
+
+Run all relevant scenarios again. Keep them green.
+
+```mermaid
+flowchart LR
+    A[Write one realistic scenario] --> B[Run without new guidance]
+    B --> C{Fails for the target reason?}
+    C -- No --> D[Fix scenario or stop]
+    D --> B
+    C -- Yes --> E[Write minimum skill change]
+    E --> F[Run with changed skill]
+    F --> G{Target and regression scenarios pass?}
+    G -- No --> E
+    G -- Yes --> H[Refactor wording and structure]
+    H --> F
+```
+
+## Scenario Types
+
+| Skill type | Useful RED scenario |
+|---|---|
+| Discipline-enforcing | Agent skips a known rule under realistic constraints |
+| Technique | Agent cannot apply the method to a new case |
+| Pattern | Agent misses the pattern or applies it to a counter-example |
+| Reference | Agent cannot find or correctly use required information |
+| Process | Agent skips a branch, loop, stop condition, or failure path |
+
+Use the scenario form that matches the expected failure.
+
+## Good Skill Tests
+
+| Quality | Good | Weak |
+|---|---|---|
+| Minimal | Tests one behavior | Mixes many unrelated requirements |
+| Clear | Names the expected decision or output | Says only "works correctly" |
+| Realistic | Uses normal task context | Uses artificial hints |
+| Observable | Checks actions and output | Checks whether the skill was mentioned |
+| Repeatable | Can run again after edits | Depends on hidden author context |
+
+## Common Mistakes
+
+| Mistake | Correction |
+|---|---|
+| Write the skill before the scenario | Save or discard the draft, then establish RED before further authoring |
+| Accept any failure as RED | Confirm the failure is the behavior the skill must change |
+| Change the scenario during GREEN | Keep the target stable; fix the skill |
+| Add broad guidance for one narrow failure | Write the minimum general rule that explains the observed case |
+| Test only the final answer | Inspect decisions, tool use, and intermediate output |
+| Skip regression scenarios | Re-run existing scenarios after each change |
+| Keep adding words after GREEN | Refactor for clarity and token efficiency |
+
+## Verification Checklist
+
+Before deployment:
+
+- [ ] Each new behavior has a realistic scenario.
+- [ ] The scenario failed before the new guidance.
+- [ ] The failure was for the expected reason.
+- [ ] The skill change is the minimum useful correction.
+- [ ] The same scenario passes with the changed skill.
+- [ ] The complete relevant scenario suite passes.
+- [ ] Refactoring did not change intended behavior.
+- [ ] Package, link, attribution, and full repository checks pass.
+
+If these checks do not pass, the skill change is not verified.

@@ -131,8 +131,7 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
   assert.match(notices, /skills\/find-context7-docs\/SKILL\.md/);
   assert.match(notices, /obra\/superpowers/);
   assert.match(notices, /5bf4e78011075bcfc0dc295f0724994cd123ee71/);
-  assert.match(notices, /mattpocock\/skills/);
-  assert.match(notices, /3f599139104dfceabc7754eeb91319802f85e042/);
+  assert.match(notices, /skills\/test-driven-development\/SKILL\.md/);
   assert.match(notices, /Copyright \(c\) 2025 Jesse Vincent/);
 
   const license = await readFile(path.join(pluginRoot, "LICENSE"), "utf8");

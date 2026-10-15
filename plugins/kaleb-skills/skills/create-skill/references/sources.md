@@ -20,9 +20,9 @@ formal diagrams, common mistakes, type-specific testing, success criteria, and
 verification.
 
 The adaptation removes Superpowers names and prerequisites, Claude-specific
-paths and `@` behavior, runtime tool mappings, mandatory failing baselines,
-skill-level RED-GREEN-REFACTOR framing, the Iron Law, and pressure or
-rationalization doctrine. Mermaid replaces Graphviz/DOT.
+paths and `@` behavior, runtime tool mappings, the Iron Law, and pressure or
+rationalization doctrine. It keeps the skill-level RED-GREEN-REFACTOR method.
+Mermaid replaces Graphviz/DOT.
 
 `anthropic-best-practices.md` is copied without modification from the reviewed
 Superpowers commit. The main skill identifies its vendor-specific scope.
@@ -36,24 +36,24 @@ Pinned copy verification:
 
 The plugin-level `LICENSE` reproduces the Superpowers MIT notice and terms.
 
-## Matt Pocock `tdd`
+## Superpowers `test-driven-development`
 
-- Repository: <https://github.com/mattpocock/skills>
+- Repository: <https://github.com/obra/superpowers>
 - Reviewed commit:
-  <https://github.com/mattpocock/skills/commit/3f599139104dfceabc7754eeb91319802f85e042>
+  <https://github.com/obra/superpowers/commit/5bf4e78011075bcfc0dc295f0724994cd123ee71>
 - Source:
-  <https://github.com/mattpocock/skills/blob/3f599139104dfceabc7754eeb91319802f85e042/skills/engineering/tdd/SKILL.md>
-- Copyright: Copyright (c) 2026 Matt Pocock
+  <https://github.com/obra/superpowers/blob/5bf4e78011075bcfc0dc295f0724994cd123ee71/skills/test-driven-development/SKILL.md>
+- Copyright: Copyright (c) 2025 Jesse Vincent
 - License: MIT
+- Pinned source SHA-256:
+  `64B03FCE4AEE5A97A93160CEA8111F3BA13A17B7C001DB4BD5836D67FD10705D`
 
-`tdd.md` is a tailored runtime-neutral adaptation. It keeps behavior-focused
-tests, public seams, anti-patterns, vertical slices, tracer bullets, and red
-before green. It removes dependencies on named skill tools and
-repository-specific skills. It explains uncommon terms. It also states that
-software TDD does not govern skill authoring or validation.
-
-The plugin-level `LICENSE` already reproduces the Matt Pocock MIT notice and
-terms.
+`tdd.md` adapts this source and the `writing-skills` TDD mapping to skill
+authoring. It keeps RED, GREEN, REFACTOR, failure verification, minimal changes,
+regression checks, common mistakes, and final verification. It replaces
+software production code with skill instructions and replaces software tests
+with realistic agent scenarios. It removes runtime-specific commands, the Iron
+Law, and pressure or rationalization doctrine.
 
 ## Anthropic Vendor Scope
 

@@ -10,6 +10,10 @@ description: Use when creating new skills, editing existing skills, or verifying
 A skill is a reference guide for proven techniques, patterns, processes, or
 tools. It helps future agents find and apply an effective approach.
 
+Create skills with test-driven development: write a realistic scenario, watch
+it fail without the new guidance, write the minimum guidance that makes it
+pass, then improve the skill while scenarios stay green.
+
 Create or edit a skill after its purpose, trigger conditions, outputs, and
 constraints are known. This skill covers research, authoring, and validation.
 It does not duplicate the design interview owned by `/skill-grill`.
@@ -79,14 +83,15 @@ Add only the directories the skill needs.
 ```mermaid
 flowchart TD
     A[Requirements are known] --> B[Research guidance and prior art]
-    B --> C[Choose skill type and package structure]
-    C --> D[Draft frontmatter and core instructions]
-    D --> E[Add concise examples and references]
-    E --> F[Run proportional validation]
-    F --> G{Checks and scenarios pass?}
-    G -- No --> H[Fix the observed failure]
-    H --> F
-    G -- Yes --> I[Review package and attribution]
+    B --> C[Write one realistic scenario]
+    C --> D[Run without new guidance]
+    D --> E{Fails for the target reason?}
+    E -- No --> C
+    E -- Yes --> F[Write minimum skill change]
+    F --> G[Run with changed skill]
+    G --> H{Target and regression scenarios pass?}
+    H -- No --> F
+    H -- Yes --> I[Refactor and run checks]
 ```
 
 ### 1. Research
@@ -118,7 +123,27 @@ Write one sentence for each item:
 Keep adjacent workflows separate. Link to them instead of copying their full
 instructions.
 
-### 3. Write Frontmatter
+### 3. Establish RED
+
+Read [tdd.md](references/tdd.md). Write a realistic scenario for the behavior
+the skill must teach. Run it without the new guidance:
+
+- run without the skill for a new skill;
+- run with the current skill for an edit; or
+- prove the old fact is wrong for a factual correction.
+
+Confirm the failure is relevant before authoring. Record the observed behavior
+and the success criteria.
+
+### 4. Write the Minimum Skill
+
+Write only enough guidance to make the RED scenario pass. Run the same scenario
+with the changed skill. Then re-run existing scenarios.
+
+After GREEN, improve wording, structure, and token use while all scenarios stay
+green.
+
+### 5. Write Frontmatter
 
 Start `SKILL.md` with YAML frontmatter:
 
@@ -231,8 +256,8 @@ nested references.
 
 Optional references in this package:
 
-- Read [tdd.md](references/tdd.md) only for software test-driven development.
-  It does not govern skill authoring or validation.
+- Read [tdd.md](references/tdd.md) before creating a skill or making a
+  behavior-changing edit. It defines RED-GREEN-REFACTOR for skill authoring.
 - Read
   [anthropic-best-practices.md](references/anthropic-best-practices.md) for the
   pinned, unmodified Anthropic vendor guidance. Its runtime assumptions are not
@@ -334,8 +359,9 @@ conventions.
 
 ## Testing All Skill Types
 
-Testing must be proportional to the skill type and risk. Do not require a
-failing baseline before creating or editing a skill.
+Testing must be proportional to the skill type and risk. Establish RED before
+new skill behavior or a behavior-changing edit, then use the matrix to choose
+the scenario form.
 
 | Skill type | Test approach | Success criteria |
 |---|---|---|
@@ -347,8 +373,7 @@ failing baseline before creating or editing a skill.
 
 For a mixed skill, combine the relevant rows.
 
-Use baseline comparison only when it gives useful evidence. It can help show
-that new guidance changes behavior. It is not a mandatory gate.
+Read [tdd.md](references/tdd.md) for the complete RED-GREEN-REFACTOR cycle.
 
 ## Match the Form to the Failure
 
@@ -379,7 +404,7 @@ evidence.
 | Adding many similar examples | Keep one example that proves the distinction |
 | Copying material without records | Record URL, revision, copyright, license, and copy status |
 | Testing every skill with one harness | Match validation to the skill type and risk |
-| Requiring a failing baseline | Use it only when it adds evidence |
+| Writing guidance before establishing RED | Run a realistic scenario without the new guidance first |
 | Using a diagram for linear steps | Use a numbered list |
 | Hiding script assumptions | Name the interpreter and required inputs |
 
@@ -444,9 +469,10 @@ A skill is ready when:
 
 Before deployment:
 
-1. Read the skill as an agent that has no author context.
-2. Remove duplicate, stale, and runtime-specific instructions.
-3. Run package and repository checks.
-4. Run the proportional scenario review.
-5. Fix each issue introduced by the skill.
-6. Review the final diff for scope, source records, and generated files.
+1. Confirm each new behavior had a relevant RED scenario.
+2. Confirm the same scenario is GREEN with the changed skill.
+3. Read the skill as an agent that has no author context.
+4. Remove duplicate, stale, and runtime-specific instructions.
+5. Run regression scenarios, package checks, and repository checks.
+6. Fix each issue introduced by the skill.
+7. Review the final diff for scope, source records, and generated files.
