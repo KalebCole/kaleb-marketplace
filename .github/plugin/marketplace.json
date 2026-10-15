@@ -63,6 +63,16 @@
         "ref": "main"
       },
       "category": "Productivity"
+    },
+    {
+      "name": "goal-prompt",
+      "source": {
+        "source": "github",
+        "repo": "trailofbits/skills",
+        "path": "plugins/goal-prompt",
+        "ref": "main"
+      },
+      "category": "Productivity"
     }
   ]
 }
