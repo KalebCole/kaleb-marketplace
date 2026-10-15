@@ -39,6 +39,14 @@ claude plugin install <plugin-name>@kaleb-marketplace
 See [usage](docs/usage.md) for install syntax, support boundaries, and native
 source paths.
 
+## Prompts and automation
+
+The [prompt library](prompts/README.md) contains copy-paste prompts for safe
+marketplace maintenance, including a Codex audit and a bounded daily sync.
+Read [automation](docs/automation.md) before enabling a scheduled sync: the
+repository validates and publishes marketplace changes, while each client
+chooses when to refresh its own installed plugins.
+
 ## Install Impeccable
 
 Impeccable is not a marketplace plugin. Use its supported native installer:
