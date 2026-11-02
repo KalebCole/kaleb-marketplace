@@ -2,6 +2,31 @@
 
 This plugin contains frozen copies of reviewed upstream skill files.
 
+## `create-skill`
+
+- Primary source repository: `https://github.com/obra/superpowers`
+- Reviewed commit: `5bf4e78011075bcfc0dc295f0724994cd123ee71`
+- Original source paths:
+  - `skills/writing-skills/SKILL.md`
+  - `skills/writing-skills/anthropic-best-practices.md`
+  - `skills/test-driven-development/SKILL.md`
+- Local files:
+  - `skills/create-skill/SKILL.md`
+  - `skills/create-skill/references/anthropic-best-practices.md`
+  - `skills/create-skill/references/mermaid-conventions.md`
+  - `skills/create-skill/references/sources.md`
+  - `skills/create-skill/references/tdd.md`
+- Copyright notice: `Copyright (c) 2025 Jesse Vincent`
+- License status: MIT. The notice and terms are reproduced in `LICENSE`.
+- Adaptation: `SKILL.md` and `references/tdd.md` are runtime-neutral. They keep
+  the Superpowers skill-level RED-GREEN-REFACTOR method and remove Superpowers
+  names, Claude-specific behavior, Graphviz, the Iron Law, and
+  pressure-doctrine requirements. Mermaid replaces Graphviz.
+- Vendor reference: `anthropic-best-practices.md` is an unmodified local copy
+  from the reviewed commit. The main skill identifies its Anthropic scope.
+Exact source URLs, copy-versus-adaptation details, vendor scope, and license
+terms are also recorded in `skills/create-skill/references/sources.md`.
+
 ## `bro`
 
 - Source repository: `https://github.com/dmmulroy/skills`
