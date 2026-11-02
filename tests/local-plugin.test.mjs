@@ -69,23 +69,22 @@ Rubber duck this message from the perspective of the person receiving it. Assume
 
 const expectedSkillGrill = `---
 name: skill-grill
-description: Grill the user on creating or improving a skill, then build and dogfood it through a dedicated child session.
+description: Grill a skill idea, delegate implementation, and dogfood it until the user accepts it.
 disable-model-invocation: true
 ---
 
-Run a session using the \`grilling\` skill from \`mattpocock-skills\` and \`/skill-creator\` to reach a shared understanding of the skill the user wants to create or improve.
+Invoke \`/mattpocock-skills:grilling\` and \`/skill-creator\` in the parent session.
 
-When the shared understanding is confirmed:
+The parent owns grilling, dogfooding, and user feedback. One dedicated child owns implementation and validation.
 
-1. Create one dedicated child session to implement the skill. Use a project worktree when a repository owns the target skill. Otherwise, use the user skill location. Send the child a concise packet with the settled requirements, examples, target location, and relevant context.
-2. Tell the child to use \`/skill-creator\` to create or improve the skill.
-3. When the child reports that the skill is ready, test it live with the user in the parent session. Ask for confirmation before any consequential action.
-4. Wait until the user gives clear feedback. Send the feedback and evidence to the same child session. Ask it to update the skill.
-5. Repeat the live test and revision loop until the user accepts the result. Do not use a fixed iteration limit.
-6. Ask the child to perform final validation with \`/skill-creator\`.
-7. Ask the user whether to commit the changes and create or update a pull request.
+1. Create the child with \`create_session\`. Use a project worktree when a repository owns the skill; otherwise use the user skill location. Send the confirmed requirements and applicable repository instructions.
+2. Tell the child to invoke \`/skill-creator\`, implement the skill, and report when it is ready to dogfood.
+3. Dogfood the result in the parent on the user's real task. Collect explicit acceptance or specific feedback with evidence.
+4. Send feedback to the same child. Have it revise with \`/skill-creator\`, then dogfood again. Repeat until the user accepts the result.
+5. Have the child run final \`/skill-creator\` validation and report that it passes.
+6. Ask the user to approve committing the changes and creating or updating a pull request.
 
-Keep implementation work in the child session. Keep the live test and user feedback in the parent session.
+Finish when the user has accepted the skill, final validation passes, and the user has decided whether to publish the changes.
 `;
 
 const expectedLicense = `MIT License
