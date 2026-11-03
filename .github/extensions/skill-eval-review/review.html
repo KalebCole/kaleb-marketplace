@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Skill evaluation review</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--background-color-default, #fff);
+      color: var(--text-color-default, #1f2328);
+      font: var(--text-body-medium, 14px)/var(--leading-body-medium, 20px)
+        var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+    }
+    button, textarea { font: inherit; }
+    button {
+      border: 1px solid var(--border-color-default, #d0d7de);
+      border-radius: 6px;
+      background: var(--background-color-default, #fff);
+      color: inherit;
+      cursor: pointer;
+      padding: 6px 12px;
+    }
+    button.primary { background: var(--true-color-blue, #0969da); color: var(--color-white, #fff); border: 0; }
+    button:disabled { cursor: not-allowed; opacity: .5; }
+    header {
+      border-bottom: 1px solid var(--border-color-default, #d0d7de);
+      padding: 16px 20px;
+      position: sticky;
+      top: 0;
+      background: var(--background-color-default, #fff);
+      z-index: 1;
+    }
+    h1 { font-size: var(--text-title-large, 26px); line-height: var(--leading-title-large, 32px); margin: 0; }
+    h2 { font-size: 16px; margin: 0 0 8px; }
+    h3 { font-size: 14px; margin: 0 0 8px; }
+    .muted { color: var(--text-color-muted, #57606a); }
+    .tabs, .navigation { display: flex; gap: 8px; align-items: center; }
+    .tabs { margin-top: 12px; }
+    .tabs button.active { outline: 2px solid var(--color-focus-outline, #0969da); }
+    main { padding: 20px; }
+    section {
+      border: 1px solid var(--border-color-default, #d0d7de);
+      border-radius: 8px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    section > h2, section > h3 { background: color-mix(in srgb, var(--background-color-default, #fff), var(--text-color-default, #1f2328) 5%); padding: 10px 12px; }
+    .content { padding: 12px; }
+    .prompt { white-space: pre-wrap; }
+    .badge { border: 1px solid var(--border-color-default, #d0d7de); border-radius: 999px; padding: 2px 8px; margin-left: 8px; }
+    .output { margin-bottom: 12px; }
+    .output:last-child { margin-bottom: 0; }
+    .output-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+    pre { overflow: auto; white-space: pre-wrap; font-family: var(--font-mono, Consolas, monospace); font-size: var(--text-code-inline, 12px); }
+    img, iframe { max-width: 100%; }
+    iframe { border: 0; min-height: 480px; width: 100%; }
+    textarea { min-height: 120px; resize: vertical; width: 100%; padding: 8px; color: inherit; background: inherit; border: 1px solid var(--border-color-default, #d0d7de); border-radius: 6px; }
+    .navigation { justify-content: space-between; position: sticky; bottom: 0; padding: 12px 20px; border-top: 1px solid var(--border-color-default, #d0d7de); background: var(--background-color-default, #fff); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .metric { border: 1px solid var(--border-color-default, #d0d7de); border-radius: 6px; padding: 12px; }
+    .hidden { display: none; }
+    .status { min-height: 20px; }
+    details { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="title">Skill evaluation review</h1>
+    <div class="muted" id="identity"></div>
+    <div class="tabs">
+      <button id="review-tab" class="active">Runs</button>
+      <button id="benchmark-tab">Benchmark</button>
+    </div>
+  </header>
+  <main>
+    <div id="review-panel">
+      <section>
+        <h2>Prompt <span class="badge" id="configuration"></span></h2>
+        <div class="content">
+          <div class="prompt" id="prompt"></div>
+          <div class="muted" id="expected-output"></div>
+        </div>
+      </section>
+      <section>
+        <h2>Output</h2>
+        <div class="content" id="outputs"></div>
+      </section>
+      <section id="grades-section">
+        <h2>Formal grades</h2>
+        <div class="content" id="grades"></div>
+      </section>
+      <section id="previous-section">
+        <h2>Prior iteration</h2>
+        <div class="content" id="previous"></div>
+      </section>
+      <section>
+        <h2>Feedback</h2>
+        <div class="content">
+          <textarea id="feedback" aria-label="Feedback for this run"></textarea>
+          <div class="status muted" id="status"></div>
+        </div>
+      </section>
+    </div>
+    <div id="benchmark-panel" class="hidden"></div>
+  </main>
+  <div class="navigation" id="navigation">
+    <button id="previous-button">Previous</button>
+    <span id="progress"></span>
+    <button id="submit-button" class="primary">Submit all reviews</button>
+    <button id="next-button">Next</button>
+  </div>
+  <script>
+    const token = new URLSearchParams(location.search).get("token");
+    const endpoint = (pathname) => `${pathname}?token=${encodeURIComponent(token || "")}`;
+    let state;
+    let index = 0;
+    const feedbackByRun = new Map();
+    let saveTimer;
+
+    const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    })[character]);
+
+    function outputHtml(file) {
+      const download = `<a download="${escapeHtml(file.name)}" href="${file.dataUri || ""}">Download</a>`;
+      if (file.type === "text") {
+        return `<div class="output"><div class="output-head"><strong>${escapeHtml(file.name)}</strong></div><pre>${escapeHtml(file.content)}</pre></div>`;
+      }
+      if (file.type === "image") {
+        return `<div class="output"><div class="output-head"><strong>${escapeHtml(file.name)}</strong>${download}</div><img alt="${escapeHtml(file.name)}" src="${file.dataUri}"></div>`;
+      }
+      if (file.type === "pdf") {
+        return `<div class="output"><div class="output-head"><strong>${escapeHtml(file.name)}</strong>${download}</div><iframe title="${escapeHtml(file.name)}" src="${file.dataUri}"></iframe></div>`;
+      }
+      return `<div class="output"><div class="output-head"><strong>${escapeHtml(file.name)}</strong>${download}</div></div>`;
+    }
+
+    function gradeHtml(grading) {
+      if (!grading) return "";
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+      return `<p><strong>${Math.round((summary.pass_rate || 0) * 100)}%</strong> — ${summary.passed || 0} passed, ${summary.failed || 0} failed</p>
+        <ul>${expectations.map((item) => `<li>${item.passed ? "Pass" : "Fail"}: ${escapeHtml(item.text)}${item.evidence ? `<div class="muted">${escapeHtml(item.evidence)}</div>` : ""}</li>`).join("")}</ul>`;
+    }
+
+    function renderRun() {
+      const run = state.runs[index];
+      document.getElementById("prompt").textContent = run.prompt;
+      document.getElementById("configuration").textContent = run.configuration;
+      document.getElementById("expected-output").textContent = run.expectedOutput ? `Expected: ${run.expectedOutput}` : "";
+      document.getElementById("outputs").innerHTML = run.outputs.length ? run.outputs.map(outputHtml).join("") : '<p class="muted">No output files.</p>';
+      document.getElementById("grades-section").classList.toggle("hidden", !run.grading);
+      document.getElementById("grades").innerHTML = gradeHtml(run.grading);
+      const prior = state.previous[run.id];
+      document.getElementById("previous-section").classList.toggle("hidden", !prior);
+      document.getElementById("previous").innerHTML = prior
+        ? `${prior.feedback ? `<p><strong>Prior feedback:</strong> ${escapeHtml(prior.feedback)}</p>` : ""}${(prior.outputs || []).map(outputHtml).join("")}`
+        : "";
+      document.getElementById("feedback").value = feedbackByRun.get(run.id) || "";
+      document.getElementById("progress").textContent = `${index + 1} of ${state.runs.length}`;
+      document.getElementById("previous-button").disabled = index === 0;
+      document.getElementById("next-button").disabled = index === state.runs.length - 1;
+    }
+
+    function feedbackPayload(status) {
+      const timestamp = new Date().toISOString();
+      const reviews = state.runs
+        .filter((run) => status === "complete" || feedbackByRun.has(run.id))
+        .map((run) => ({ run_id: run.id, feedback: feedbackByRun.get(run.id) || "", timestamp }));
+      return { evaluation_id: state.evaluationId, reviews, status };
+    }
+
+    async function save(status = "in_progress") {
+      const response = await fetch(endpoint("/api/feedback"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(feedbackPayload(status)),
+      });
+      if (!response.ok) throw new Error((await response.json()).error || "Feedback save failed.");
+      document.getElementById("status").textContent = status === "complete" ? "Review submitted." : "Saved.";
+    }
+
+    function renderBenchmark() {
+      const benchmark = state.benchmark;
+      const panel = document.getElementById("benchmark-panel");
+      if (!benchmark) {
+        panel.innerHTML = '<p class="muted">No benchmark data is available.</p>';
+        return;
+      }
+      const summary = benchmark.run_summary || {};
+      panel.innerHTML = `<section><h2>Benchmark data</h2><div class="content">
+        <div class="grid">${Object.entries(summary).map(([key, value]) => `<div class="metric"><strong>${escapeHtml(key.replaceAll("_", " "))}</strong><div>${escapeHtml(typeof value === "object" ? JSON.stringify(value) : value)}</div></div>`).join("")}</div>
+        <details><summary>Raw benchmark JSON</summary><pre>${escapeHtml(JSON.stringify(benchmark, null, 2))}</pre></details>
+      </div></section>`;
+    }
+
+    function showPanel(name) {
+      const benchmark = name === "benchmark";
+      document.getElementById("review-panel").classList.toggle("hidden", benchmark);
+      document.getElementById("navigation").classList.toggle("hidden", benchmark);
+      document.getElementById("benchmark-panel").classList.toggle("hidden", !benchmark);
+      document.getElementById("review-tab").classList.toggle("active", !benchmark);
+      document.getElementById("benchmark-tab").classList.toggle("active", benchmark);
+    }
+
+    async function initialize() {
+      const response = await fetch(endpoint("/api/state"));
+      if (!response.ok) throw new Error((await response.json()).error || "Review state could not load.");
+      state = await response.json();
+      for (const review of state.feedback.reviews || []) feedbackByRun.set(review.run_id, review.feedback);
+      document.getElementById("title").textContent = `Eval review: ${state.skillName}`;
+      document.getElementById("identity").textContent = `Evaluation ${state.evaluationId}`;
+      document.getElementById("benchmark-tab").disabled = !state.benchmark;
+      renderBenchmark();
+      renderRun();
+    }
+
+    document.getElementById("feedback").addEventListener("input", (event) => {
+      feedbackByRun.set(state.runs[index].id, event.target.value);
+      clearTimeout(saveTimer);
+      document.getElementById("status").textContent = "";
+      saveTimer = setTimeout(() => save().catch((error) => {
+        document.getElementById("status").textContent = error.message;
+      }), 500);
+    });
+    document.getElementById("previous-button").addEventListener("click", () => { index--; renderRun(); });
+    document.getElementById("next-button").addEventListener("click", () => { index++; renderRun(); });
+    document.getElementById("submit-button").addEventListener("click", () => save("complete").catch((error) => {
+      document.getElementById("status").textContent = error.message;
+    }));
+    document.getElementById("review-tab").addEventListener("click", () => showPanel("review"));
+    document.getElementById("benchmark-tab").addEventListener("click", () => showPanel("benchmark"));
+    initialize().catch((error) => {
+      document.querySelector("main").innerHTML = `<p>${escapeHtml(error.message)}</p>`;
+    });
+  </script>
+</body>
+</html>

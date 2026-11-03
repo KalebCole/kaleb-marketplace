@@ -45,8 +45,6 @@ This plugin contains frozen copies of reviewed upstream skill files.
   - `skills/skill-creator/agents/comparator.md`
   - `skills/skill-creator/agents/grader.md`
   - `skills/skill-creator/assets/eval_review.html`
-  - `skills/skill-creator/eval-viewer/generate_review.py`
-  - `skills/skill-creator/eval-viewer/viewer.html`
   - `skills/skill-creator/references/schemas.md`
   - `skills/skill-creator/scripts/__init__.py`
   - `skills/skill-creator/scripts/aggregate_benchmark.py`
@@ -70,8 +68,10 @@ This plugin contains frozen copies of reviewed upstream skill files.
   adaptation. It preserves the upstream workflow and bundled resources while
   replacing product-specific host assumptions with capability-based fallbacks,
   clarifying focused description guidance, and accepting the documented
-  single-run evaluation layout in `aggregate_benchmark.py`. Automated source
-  updates are disabled so these maintained changes are not overwritten.
+  single-run evaluation layout in `aggregate_benchmark.py`. The browser-server
+  evaluation viewer is replaced by the repository-authored Copilot canvas at
+  `.github/extensions/skill-eval-review/`. Automated source updates are
+  disabled so these maintained changes are not overwritten.
 
 ### Runtime dependencies and support boundaries
 
@@ -91,15 +91,13 @@ The optional automated description optimizer requires an authenticated Claude
 Code CLI (`claude -p`) and writes temporary commands under the current project's
 `.claude/commands/`. Other hosts use the documented manual trigger-review
 fallback. Isolation and presentation steps depend on the host's available tools.
+The project canvas requires a Copilot runtime that supports project-scoped
+extension canvases. Other hosts use the conversation fallback in `SKILL.md`.
 
-The HTML templates request Google Fonts. The evaluation viewer requests
-SheetJS 0.20.3 from its upstream CDN, with the upstream integrity attribute, for
-spreadsheet rendering. These remote resources are not copied into this plugin;
-those features require network access. The Python viewer otherwise uses only
-the standard library and includes a `--static` output mode. Its unchanged server
-mode attempts to terminate existing listeners on the selected port; use static
-mode in a shared environment. Repository validation does not execute these
-bundled helpers or make model calls.
+The trigger-review HTML template requests Google Fonts. It requests no external
+scripts. The remote fonts are not copied into this plugin and require network
+access. Repository validation does not execute the bundled Python helpers or
+make model calls.
 
 ## `obsidian-cli`
 

@@ -14,7 +14,7 @@ At a high level, the process of creating a skill goes like this:
 - Create a few test prompts and run an agent with access to the skill on them
 - Help the user evaluate the results both qualitatively and quantitatively
   - While the runs happen in the background, draft some quantitative evals if there aren't any (if there are some, you can either use as is or modify if you feel something needs to change about them). Then explain them to the user (or if they already existed, explain the ones that already exist)
-  - Use the `eval-viewer/generate_review.py` script to show the user the results for them to look at, and also let them look at the quantitative metrics
+  - Use the `skill-eval-review` canvas to show the user the results and quantitative metrics
 - Rewrite the skill based on feedback from the user's evaluation of the results (and also if there are any glaring flaws that become apparent from the quantitative benchmarks)
 - Repeat until you're satisfied
 - Expand the test set and try again at larger scale
@@ -200,9 +200,9 @@ Write an `eval_metadata.json` for each test case (assertions can be empty for no
 
 Don't just wait for the runs to finish — you can use this time productively. Draft quantitative assertions for each test case and explain them to the user. If assertions already exist in `evals/evals.json`, review them and explain what they check.
 
-Good assertions are objectively verifiable and have descriptive names — they should read clearly in the benchmark viewer so someone glancing at the results immediately understands what each one checks. Subjective skills (writing style, design quality) are better evaluated qualitatively — don't force assertions onto things that need human judgment.
+Good assertions are objectively verifiable and have descriptive names — they should read clearly in the benchmark view so someone glancing at the results immediately understands what each one checks. Subjective skills (writing style, design quality) are better evaluated qualitatively — don't force assertions onto things that need human judgment.
 
-Update the `eval_metadata.json` files and `evals/evals.json` with the assertions once drafted. Also explain to the user what they'll see in the viewer — both the qualitative outputs and the quantitative benchmark.
+Update the `eval_metadata.json` files and `evals/evals.json` with the assertions once drafted. Also explain to the user what they'll see in the canvas — both the qualitative outputs and the quantitative benchmark.
 
 ### Step 3: As runs complete, capture timing data
 
@@ -218,39 +218,53 @@ When each subagent task completes, you receive a notification containing `total_
 
 This is the only opportunity to capture this data — it comes through the task notification and isn't persisted elsewhere. Process each notification as it arrives rather than trying to batch them.
 
-### Step 4: Grade, aggregate, and launch the viewer
+### Step 4: Grade, aggregate, and open the review canvas
 
 Once all runs are done:
 
-1. **Grade each run** — spawn a grader subagent (or grade inline) that reads `agents/grader.md` and evaluates each assertion against the outputs. Save results to `grading.json` in each run directory. The grading.json expectations array must use the fields `text`, `passed`, and `evidence` (not `name`/`met`/`details` or other variants) — the viewer depends on these exact field names. For assertions that can be checked programmatically, write and run a script rather than eyeballing it — scripts are faster, more reliable, and can be reused across iterations.
+1. **Grade each run** — spawn a grader subagent (or grade inline) that reads `agents/grader.md` and evaluates each assertion against the outputs. Save results to `grading.json` in each run directory. The grading.json expectations array must use the fields `text`, `passed`, and `evidence` (not `name`/`met`/`details` or other variants) — the canvas depends on these exact field names. For assertions that can be checked programmatically, write and run a script rather than eyeballing it — scripts are faster, more reliable, and can be reused across iterations.
 
 2. **Aggregate into benchmark** — run the aggregation script from the skill-creator directory:
    ```bash
    python -m scripts.aggregate_benchmark <workspace>/iteration-N --skill-name <name>
    ```
-   This produces `benchmark.json` and `benchmark.md` with pass_rate, time, and tokens for each configuration, with mean ± stddev and the delta. If generating benchmark.json manually, see `references/schemas.md` for the exact schema the viewer expects.
+   This produces `benchmark.json` and `benchmark.md` with pass_rate, time, and tokens for each configuration, with mean ± stddev and the delta. If generating benchmark.json manually, see `references/schemas.md` for the exact schema the canvas expects.
 Put each with_skill version before its baseline counterpart.
 
 3. **Do an analyst pass** — read the benchmark data and surface patterns the aggregate stats might hide. See `agents/analyzer.md` (the "Analyzing Benchmark Results" section) for what to look for — things like assertions that always pass regardless of skill (non-discriminating), high-variance evals (possibly flaky), and time/token tradeoffs.
 
-4. **Launch the viewer** with both qualitative outputs and quantitative data:
-   ```bash
-   nohup python <skill-creator-path>/eval-viewer/generate_review.py \
-     <workspace>/iteration-N \
-     --skill-name "my-skill" \
-     --benchmark <workspace>/iteration-N/benchmark.json \
-     > /dev/null 2>&1 &
-   VIEWER_PID=$!
+4. **Open the `skill-eval-review` canvas** with both qualitative outputs and
+   quantitative data. First check its capabilities. Then open it with a stable
+   evaluation ID:
+
+   ```json
+   {
+     "canvasId": "skill-eval-review",
+     "instanceId": "<short-panel-id>",
+     "input": {
+       "evaluationId": "<skill-name>.iteration-1",
+       "workspacePath": "<absolute-iteration-path>",
+       "skillName": "<skill-name>",
+       "benchmarkPath": "<absolute-path-to-benchmark.json>"
+     }
+   }
    ```
-   For iteration 2+, also pass `--previous-workspace <workspace>/iteration-<N-1>`.
 
-   **Headless environments:** If `webbrowser.open()` is not available or the environment has no display, use `--static <output_path>` to write a standalone HTML file instead of starting a server. Feedback will be downloaded as a `feedback.json` file when the user clicks "Submit All Reviews". After download, copy `feedback.json` into the workspace directory for the next iteration to pick up.
+   For iteration 2+, also pass `previousWorkspacePath` with the absolute path
+   to the previous iteration. The extension saves `feedback.json` in the
+   evaluation workspace. It uses `evaluationId` as the stable evaluation
+   identity. Do not use the canvas `instanceId` as a data ID.
 
-Note: please use generate_review.py to create the viewer; there's no need to write custom HTML.
+   If the canvas is not available in the current host, present the same
+   material in the conversation. Collect one feedback entry for every run and
+   write the same file format before continuing.
 
-5. **Tell the user** something like: "I've opened the results in your browser. There are two tabs — 'Outputs' lets you click through each test case and leave feedback, 'Benchmark' shows the quantitative comparison. When you're done, come back here and let me know."
+5. **Tell the user** something like: "I've opened the evaluation review canvas.
+   The Runs tab lets you inspect each skill and baseline output and leave
+   feedback. The Benchmark tab shows the quantitative comparison. When you're
+   done, come back here and let me know."
 
-### What the user sees in the viewer
+### What the user sees in the canvas
 
 The "Outputs" tab shows one test case at a time:
 - **Prompt**: the task that was given
@@ -262,7 +276,8 @@ The "Outputs" tab shows one test case at a time:
 
 The "Benchmark" tab shows the stats summary: pass rates, timing, and token usage for each configuration, with per-eval breakdowns and analyst observations.
 
-Navigation is via prev/next buttons or arrow keys. When done, they click "Submit All Reviews" which saves all feedback to `feedback.json`.
+Navigation is via the previous and next buttons. When done, they click "Submit
+all reviews", which saves all feedback to `feedback.json`.
 
 ### Step 5: Read the feedback
 
@@ -270,6 +285,7 @@ When the user tells you they're done, read `feedback.json`:
 
 ```json
 {
+  "evaluation_id": "table-cleanup.iteration-1",
   "reviews": [
     {"run_id": "eval-0-with_skill", "feedback": "the chart is missing axis labels", "timestamp": "..."},
     {"run_id": "eval-1-with_skill", "feedback": "", "timestamp": "..."},
@@ -280,12 +296,6 @@ When the user tells you they're done, read `feedback.json`:
 ```
 
 Empty feedback means the user thought it was fine. Focus your improvements on the test cases where the user had specific complaints.
-
-Kill the viewer server when you're done with it:
-
-```bash
-kill $VIEWER_PID 2>/dev/null
-```
 
 ---
 
@@ -311,7 +321,7 @@ After improving the skill:
 
 1. Apply your improvements to the skill
 2. Rerun all test cases into a new `iteration-<N+1>/` directory, including baseline runs. If you're creating a new skill, the baseline is always `without_skill` (no skill) — that stays the same across iterations. If you're improving an existing skill, use your judgment on what makes sense as the baseline: the original version the user came in with, or the previous iteration.
-3. Launch the reviewer with `--previous-workspace` pointing at the previous iteration
+3. Open the canvas with `previousWorkspacePath` pointing at the previous iteration
 4. Wait for the user to review and tell you they're done
 5. Read the new feedback, improve again, repeat
 
@@ -425,7 +435,7 @@ The core workflow stays the same across hosts: draft, test, review, improve, and
 
 **No isolated workers**: Run each test case yourself, one at a time. This is less rigorous because the same context writes and evaluates the skill, so disclose the limitation. Skip baseline comparisons when they would not be independent.
 
-**No browser or display**: Generate a static reviewer when possible. Otherwise present each prompt and output in the conversation and collect feedback inline.
+**No canvas support**: Present each prompt, output, grade, and benchmark in the conversation and collect feedback inline.
 
 **No benchmark-quality isolation**: Focus on qualitative feedback instead of presenting dependent runs as quantitative evidence.
 
@@ -459,11 +469,11 @@ Repeating one more time the core loop here for emphasis:
 - Draft or edit the skill
 - Run an agent with access to the skill on test prompts
 - With the user, evaluate the outputs:
-  - Create benchmark.json and run `eval-viewer/generate_review.py` to help the user review them
+  - Create benchmark.json and open the `skill-eval-review` canvas to help the user review them
   - Run quantitative evals
 - Repeat until you and the user are satisfied
 - Package the final skill and return it to the user.
 
-Please add steps to your task list, if the host provides one, so you do not forget the evaluation viewer and human review.
+Please add steps to your task list, if the host provides one, so you do not forget the evaluation canvas and human review.
 
 Good luck!
