@@ -54,6 +54,8 @@ export function sourceDetails(section) {
     licensePath,
     branch: section.body.match(/^- Source branch: `([^`]+)`$/m)?.[1] ?? "main",
     sourceName: section.body.match(/^- Source skill name: `([^`]+)`$/m)?.[1] ?? section.name,
+    automatedUpdates:
+      section.body.match(/^- Automated source updates: `(enabled|disabled)`$/m)?.[1] !== "disabled",
   };
 }
 
@@ -123,7 +125,8 @@ export function updateSection(section, nextCommit, files) {
 
 export async function syncCopiedSkills({ dryRun = false } = {}) {
   let notices = await readFile(noticesPath, "utf8");
-  const sources = sections(notices).map(sourceDetails);
+  const sources = sections(notices).map(sourceDetails)
+    .filter(({ automatedUpdates }) => automatedUpdates);
   const tempRoot = await mkdtemp(path.join(tmpdir(), "kaleb-skill-sync-"));
   const updates = [];
 

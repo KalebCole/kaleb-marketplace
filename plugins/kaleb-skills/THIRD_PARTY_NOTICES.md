@@ -35,6 +35,7 @@ This plugin contains frozen copies of reviewed upstream skill files.
 - Source repository: `https://github.com/anthropics/skills`
 - Reviewed commit: `8a1541c4a3ffa5a20a5a91de0dcf3f0bab1d1ef4`
 - Original source path: `skills/skill-creator/`
+- Automated source updates: `disabled`
 - Source at reviewed commit:
   <https://github.com/anthropics/skills/tree/8a1541c4a3ffa5a20a5a91de0dcf3f0bab1d1ef4/skills/skill-creator>
 - Copied files:
@@ -49,12 +50,8 @@ This plugin contains frozen copies of reviewed upstream skill files.
   - `skills/skill-creator/references/schemas.md`
   - `skills/skill-creator/scripts/__init__.py`
   - `skills/skill-creator/scripts/aggregate_benchmark.py`
-  - `skills/skill-creator/scripts/generate_report.py`
-  - `skills/skill-creator/scripts/improve_description.py`
   - `skills/skill-creator/scripts/package_skill.py`
   - `skills/skill-creator/scripts/quick_validate.py`
-  - `skills/skill-creator/scripts/run_eval.py`
-  - `skills/skill-creator/scripts/run_loop.py`
   - `skills/skill-creator/scripts/utils.py`
 - Reviewed license path: `skills/skill-creator/LICENSE.txt`
 - Copyright notice: `Copyright 2026 Anthropic, PBC.`
@@ -65,9 +62,10 @@ This plugin contains frozen copies of reviewed upstream skill files.
   skill's Apache-2.0 license. No applicable upstream `NOTICE` file or nested
   license override was present at the reviewed commit. Other upstream skills
   have different terms and are not included.
-- Local adjustments: none. All 18 files, including invocation metadata, are
-  unchanged. This frozen skill copy changes when a reviewed source-copy pull
-  request is merged.
+- Local adjustments: runtime-specific product language and the Claude CLI
+  trigger optimizer are removed. The browser review viewer remains unchanged
+  except for product-neutral completion text. Automated source updates are
+  disabled because replacing this directory would remove these adaptations.
 
 ### Runtime dependencies and support boundaries
 
@@ -83,11 +81,9 @@ from the installed `skill-creator` directory as shown in `SKILL.md`; its sibling
 `utils/package_skill.py` examples are legacy upstream paths; the actual bundled
 entry point is `python -m scripts.package_skill`, as specified in `SKILL.md`.
 
-Description optimization requires an authenticated Claude Code CLI (`claude -p`)
-and writes temporary commands under the current project's `.claude/commands/`.
-It is not a Copilot-native evaluation backend. Subagent and presentation steps
-depend on the host's available tools; storage and catalog validation do not prove
-equivalent execution in every client.
+Evaluation isolation, presentation, and trigger measurement depend on the
+current host's available tools. The skill does not claim measured trigger
+accuracy when the host has no documented trigger-evaluation capability.
 
 The HTML templates request Google Fonts. The evaluation viewer requests
 SheetJS 0.20.3 from its upstream CDN, with the upstream integrity attribute, for

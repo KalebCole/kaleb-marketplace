@@ -94,6 +94,19 @@ test("skill-creator support references and local Python imports are included", a
   ]) {
     assert.ok(review.includes(placeholder), `${placeholder} must remain in the template`);
   }
+  assert.ok(document.includes("Use the bundled review viewer"));
+  assert.ok(!document.includes("Claude Code"));
+  assert.ok(!document.includes("Claude.ai"));
+  assert.ok(!document.includes("Cowork"));
+  assert.ok(!document.includes("claude -p"));
+  for (const removed of [
+    "scripts/generate_report.py",
+    "scripts/improve_description.py",
+    "scripts/run_eval.py",
+    "scripts/run_loop.py",
+  ]) {
+    assert.ok(!reviewedFiles.has(removed), `${removed} must not remain in the inventory`);
+  }
 });
 
 test("skill-creator records exact provenance and its directory-specific license", async () => {
@@ -106,11 +119,11 @@ test("skill-creator records exact provenance and its directory-specific license"
     "Reviewed license path: `skills/skill-creator/LICENSE.txt`",
     "Copyright 2026 Anthropic, PBC.",
     "Apache-2.0",
-    "Local adjustments: none.",
-    "frozen skill copy",
+    "Automated source updates: `disabled`",
+    "runtime-specific product language",
+    "browser review viewer remains",
     "Python 3.10",
     "PyYAML",
-    "claude -p",
     "Google Fonts",
     "SheetJS 0.20.3",
     "--static",
