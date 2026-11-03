@@ -17,6 +17,7 @@ test("copied skill updater reads every upstream source from notices", async () =
   assert.equal(sources[1].sourceDir, "skills/find-docs");
   assert.equal(sources[1].sourceName, "find-docs");
   assert.equal(sources[1].branch, "master");
+  assert.equal(sources[2].automatedUpdates, false);
 });
 
 test("copied skill updater retains the local Context7 name", async () => {

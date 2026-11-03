@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
-import { readdir, readFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
+import { promisify } from "node:util";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -9,6 +12,7 @@ import yaml from "js-yaml";
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pluginRoot = path.join(repoRoot, "plugins", "kaleb-skills");
 const skillRoot = path.join(pluginRoot, "skills", "skill-creator");
+const run = promisify(execFile);
 
 async function provenance() {
   const notices = await readFile(path.join(pluginRoot, "THIRD_PARTY_NOTICES.md"), "utf8");
@@ -94,6 +98,53 @@ test("skill-creator support references and local Python imports are included", a
   ]) {
     assert.ok(review.includes(placeholder), `${placeholder} must remain in the template`);
   }
+  for (const retained of [
+    "scripts/generate_report.py",
+    "scripts/improve_description.py",
+    "scripts/run_eval.py",
+    "scripts/run_loop.py",
+  ]) {
+    assert.ok(reviewedFiles.has(retained), `${retained} must remain in the inventory`);
+  }
+  assert.ok(document.includes("Include only the information needed to decide whether to load the skill."));
+  assert.ok(document.includes("cover each distinct invocation branch"));
+  assert.ok(document.includes("Avoid lists of duplicate trigger synonyms"));
+  assert.ok(document.includes("Agents tend to under-trigger skills"));
+  assert.ok(document.includes("eval-viewer/generate_review.py"));
+  assert.ok(document.includes("scripts.aggregate_benchmark"));
+});
+
+test("skill-creator benchmark aggregator supports the documented single-run layout", async () => {
+  const workspace = await mkdtemp(path.join(tmpdir(), "skill-creator-benchmark-"));
+  try {
+    const evalDir = path.join(workspace, "eval-table-cleanup");
+    await mkdir(path.join(evalDir, "with_skill"), { recursive: true });
+    await mkdir(path.join(evalDir, "without_skill"), { recursive: true });
+    await writeFile(path.join(evalDir, "eval_metadata.json"), JSON.stringify({
+      eval_id: 7,
+      eval_name: "table-cleanup",
+      prompt: "Clean this table",
+      assertions: [],
+    }));
+    const grading = (passed) => JSON.stringify({
+      expectations: [{ text: "Output exists", passed, evidence: "fixture" }],
+      summary: { passed: passed ? 1 : 0, failed: passed ? 0 : 1, total: 1, pass_rate: passed ? 1 : 0 },
+      timing: { total_duration_seconds: passed ? 2 : 3 },
+    });
+    await writeFile(path.join(evalDir, "with_skill", "grading.json"), grading(true));
+    await writeFile(path.join(evalDir, "without_skill", "grading.json"), grading(false));
+
+    await run("python", [
+      "-m", "scripts.aggregate_benchmark", workspace, "--skill-name", "fixture-skill",
+    ], { cwd: skillRoot });
+    const benchmark = JSON.parse(await readFile(path.join(workspace, "benchmark.json"), "utf8"));
+    assert.equal(benchmark.runs.length, 2);
+    assert.equal(benchmark.run_summary.with_skill.pass_rate.mean, 1);
+    assert.equal(benchmark.run_summary.without_skill.pass_rate.mean, 0);
+    assert.equal(benchmark.runs[0].eval_id, 7);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
 });
 
 test("skill-creator records exact provenance and its directory-specific license", async () => {
@@ -106,8 +157,10 @@ test("skill-creator records exact provenance and its directory-specific license"
     "Reviewed license path: `skills/skill-creator/LICENSE.txt`",
     "Copyright 2026 Anthropic, PBC.",
     "Apache-2.0",
-    "Local adjustments: none.",
-    "frozen skill copy",
+    "Automated source updates: `disabled`",
+    "locally maintained, platform-agnostic",
+    "preserves the upstream workflow and bundled resources",
+    "single-run evaluation layout",
     "Python 3.10",
     "PyYAML",
     "claude -p",

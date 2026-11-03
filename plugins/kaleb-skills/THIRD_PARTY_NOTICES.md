@@ -35,6 +35,7 @@ This plugin contains frozen copies of reviewed upstream skill files.
 - Source repository: `https://github.com/anthropics/skills`
 - Reviewed commit: `8a1541c4a3ffa5a20a5a91de0dcf3f0bab1d1ef4`
 - Original source path: `skills/skill-creator/`
+- Automated source updates: `disabled`
 - Source at reviewed commit:
   <https://github.com/anthropics/skills/tree/8a1541c4a3ffa5a20a5a91de0dcf3f0bab1d1ef4/skills/skill-creator>
 - Copied files:
@@ -65,9 +66,12 @@ This plugin contains frozen copies of reviewed upstream skill files.
   skill's Apache-2.0 license. No applicable upstream `NOTICE` file or nested
   license override was present at the reviewed commit. Other upstream skills
   have different terms and are not included.
-- Local adjustments: none. All 18 files, including invocation metadata, are
-  unchanged. This frozen skill copy changes when a reviewed source-copy pull
-  request is merged.
+- Local adjustments: `skill-creator` is a locally maintained, platform-agnostic
+  adaptation. It preserves the upstream workflow and bundled resources while
+  replacing product-specific host assumptions with capability-based fallbacks,
+  clarifying focused description guidance, and accepting the documented
+  single-run evaluation layout in `aggregate_benchmark.py`. Automated source
+  updates are disabled so these maintained changes are not overwritten.
 
 ### Runtime dependencies and support boundaries
 
@@ -83,11 +87,10 @@ from the installed `skill-creator` directory as shown in `SKILL.md`; its sibling
 `utils/package_skill.py` examples are legacy upstream paths; the actual bundled
 entry point is `python -m scripts.package_skill`, as specified in `SKILL.md`.
 
-Description optimization requires an authenticated Claude Code CLI (`claude -p`)
-and writes temporary commands under the current project's `.claude/commands/`.
-It is not a Copilot-native evaluation backend. Subagent and presentation steps
-depend on the host's available tools; storage and catalog validation do not prove
-equivalent execution in every client.
+The optional automated description optimizer requires an authenticated Claude
+Code CLI (`claude -p`) and writes temporary commands under the current project's
+`.claude/commands/`. Other hosts use the documented manual trigger-review
+fallback. Isolation and presentation steps depend on the host's available tools.
 
 The HTML templates request Google Fonts. The evaluation viewer requests
 SheetJS 0.20.3 from its upstream CDN, with the upstream integrity attribute, for

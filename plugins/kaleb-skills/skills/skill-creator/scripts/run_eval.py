@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Run trigger evaluation for a skill description.
+"""Run trigger evaluation with the optional Claude Code backend.
 
-Tests whether a skill's description causes Claude to trigger (read the skill)
-for a set of queries. Outputs results as JSON.
+Tests whether this backend loads a skill for a set of queries. Outputs results
+as JSON.
 """
 
 import argparse
