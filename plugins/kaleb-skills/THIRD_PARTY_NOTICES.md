@@ -65,39 +65,39 @@ This plugin contains frozen copies of reviewed upstream skill files.
   license override was present at the reviewed commit. Other upstream skills
   have different terms and are not included.
 - Local adjustments: `skill-creator` is a locally maintained, platform-agnostic
-  adaptation. It preserves the upstream workflow and bundled resources while
-  replacing product-specific host assumptions with capability-based fallbacks,
-  clarifying focused description guidance, and accepting the documented
-  single-run evaluation layout in `aggregate_benchmark.py`. The browser-server
-  evaluation viewer is replaced by the repository-authored Copilot canvas at
-  `.github/extensions/skill-eval-review/`. Automated source updates are
-  disabled so these maintained changes are not overwritten.
+  adaptation. Automated source updates are disabled so these maintained changes
+  are not overwritten. The approved `SKILL.md` reviews results in the conversation.
+  It follows the agentskills.io skill layout, states what a skill
+  is not, prunes instructions that do not change behavior, and adds a pruning
+  review before shipping. It does not open a review canvas. The earlier
+  browser-server evaluation viewer is not part of this skill. The Copilot
+  canvas at `.github/extensions/skill-eval-review/` remains in the repository
+  and is unused by `SKILL.md`. Bundled agents, references, assets, and Python
+  helpers also remain; `SKILL.md` does not reference them.
+  `aggregate_benchmark.py` still accepts the documented single-run evaluation layout.
 
 ### Runtime dependencies and support boundaries
 
-All referenced agent instructions, reference documents, Python modules, and HTML
-templates are included. No other upstream skill or repository-level template is
-required. Paths such as `evals/evals.json`, `timing.json`, and `feedback.json`
-refer to user-created evaluation inputs and outputs, not missing bundled files.
+`SKILL.md` names user-created evaluation files such as `evals/evals.json`,
+`timing.json`, `grading.json`, and `feedback.json`. Those paths are not
+missing bundled files.
 
-The Python helpers require Python 3.10 or newer. Validation and packaging also
-require PyYAML (`import yaml` in `scripts/quick_validate.py`). Run module commands
-from the installed `skill-creator` directory as shown in `SKILL.md`; its sibling
-`scripts` package is included. The packaging script's introductory
-`utils/package_skill.py` examples are legacy upstream paths; the actual bundled
-entry point is `python -m scripts.package_skill`, as specified in `SKILL.md`.
+The copied directory still includes agent instructions, reference documents,
+the HTML trigger-review template, and Python modules. `SKILL.md` does not
+reference them. The Python helpers require Python 3.10 or newer. Validation
+and packaging scripts import PyYAML (`import yaml` in
+`scripts/quick_validate.py`). Module commands run from the installed
+`skill-creator` directory; its sibling `scripts` package is included. The
+packaging script's introductory `utils/package_skill.py` examples are legacy
+upstream paths. The bundled entry point is `python -m scripts.package_skill`.
 
-The optional automated description optimizer requires an authenticated Claude
-Code CLI (`claude -p`) and writes temporary commands under the current project's
-`.claude/commands/`. Other hosts use the documented manual trigger-review
-fallback. Isolation and presentation steps depend on the host's available tools.
-The project canvas requires a Copilot runtime that supports project-scoped
-extension canvases. Other hosts use the conversation fallback in `SKILL.md`.
-
-The trigger-review HTML template requests Google Fonts. It requests no external
-scripts. The remote fonts are not copied into this plugin and require network
-access. Repository validation does not execute the bundled Python helpers or
-make model calls.
+`scripts/run_loop.py` still expects an authenticated Claude Code CLI
+(`claude -p`) and writes temporary commands under the current project's
+`.claude/commands/`. `SKILL.md` does not run that loop. The trigger-review
+HTML template requests Google Fonts. It requests no external scripts. The
+remote fonts are not copied into this plugin and require network access.
+Repository validation does not execute the bundled Python helpers or make
+model calls.
 
 ## `obsidian-cli`
 
