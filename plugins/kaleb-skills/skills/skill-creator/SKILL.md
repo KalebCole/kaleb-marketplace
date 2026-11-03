@@ -1,9 +1,11 @@
 ---
 name: skill-creator
 description: >-
+  Create and improve skills through a draft, test, review, and rewrite loop.
   Use when creating a new skill, turning a workflow into a skill, editing or
   improving an existing skill, testing a skill against example prompts, or
   tightening a skill's description so it triggers on the right requests.
+license: Apache-2.0
 ---
 # Skill Creator
 
@@ -33,19 +35,22 @@ Ask about edge cases, inputs, example files, success criteria and dependencies b
 
 ## 2. Write the skill to the Agent Skills standard (agentskills.io)
 
-Every SKILL.md starts with YAML frontmatter:
+Every SKILL.md starts with YAML frontmatter, then markdown instructions. These fields and limits are the [Agent Skills spec](https://agentskills.io/specification):
 
 ```
 ---
 name: skill-name
-description: What it does and when to use it.
+description: What this skill does and when to use it.
 ---
 ```
 
-- **name**: lowercase letters, digits and hyphens, matching the folder name.
-- **description** (max ~1024 chars): the only thing an agent sees when deciding to load the skill, so it is the trigger. State what the skill does and cover each distinct use. Agents under-trigger, so phrase it to catch implicit requests ("Use when the user asks to display metrics or trends in a dashboard", not "Build a dashboard"). No lists of synonyms, no workflow details.
-- Optional fields: `compatibility` (required tools or environment), `license`, `metadata`, `allowed-tools`. Use them only when they carry real information.
-- **Body**: the instructions, in markdown.
+- **name** (required): 1-64 characters. Unicode lowercase letters, digits, and hyphens only. Must not start or end with a hyphen, must not contain `--`, and must match the parent directory name.
+- **description** (required): 1-1024 characters. What the skill does and when to use it, with keywords an agent can match. This is the only field an agent sees when deciding to load the skill, so it is the trigger. Cover each distinct use. Agents under-trigger, so phrase it to catch implicit requests ("Use when the user asks to display metrics or trends in a dashboard", not "Build a dashboard"). No lists of synonyms, no workflow details.
+- **license** (optional): a short license name, or the name of a bundled license file, such as `Apache-2.0` or `Proprietary. LICENSE.txt has complete terms`.
+- **compatibility** (optional): 1-500 characters when present. Environment requirements only, such as an intended product, system packages, or network access. Omit it when the skill has none.
+- **metadata** (optional): a map of string keys to string values for properties the spec does not define. Keep key names specific enough to avoid clashes. Example: `author: example-org` and `version: "1.0"`.
+- **allowed-tools** (optional): one space-separated string of pre-approved tools, such as `Bash(git:*) Bash(jq:*) Read`. Experimental, and support varies by agent.
+- **Body**: the instructions, in markdown. No required sections.
 
 Folder layout:
 
@@ -57,12 +62,12 @@ skill-name/
 └── assets/      templates and files used in output
 ```
 
-Progressive disclosure: frontmatter is always in context, the body loads when triggered (keep it under ~500 lines), bundled files load on demand. Point to each reference file with when to read it; give long references a table of contents. For multi-variant skills, keep the workflow in SKILL.md and one reference file per variant.
+Progressive disclosure: `name` and `description` load at startup, the body loads when the skill is triggered (keep it under 500 lines; the spec recommends under 5000 tokens), and bundled files load on demand. Point to each reference file with when to read it; give long references a table of contents. For multi-variant skills, keep the workflow in SKILL.md and one reference file per variant. Reference other files with paths relative to the skill root, one level deep.
 
 ### What a skill is not
 
 A skill is a reusable, self-contained capability. Keep these out of it:
-- **The user's name or the bot's identity.** The agent already knows who it works for. Write instructions, not "you are X's bot".
+- **No user name or agent persona.** The agent already knows who it works for. Write the task, not an identity.
 - **Project-management context.** No ticket numbers, map or backlog references, PR history, or "built for ticket B3".
 - **Scheduling and automation.** When or how often it runs belongs in the routine or caller that invokes it. The skill just does the job when loaded.
 - **Artificial stop points.** Don't write "stop here" or "wait for approval before continuing" unless the step genuinely needs a human decision (sending, submitting, paying); say why when it does.
@@ -99,7 +104,7 @@ Put results in `<skill-name>-workspace/iteration-N/<eval-name>/` next to the ski
 
 - For each test, launch two background workers at the same time: one with the skill (`with_skill/outputs/`) and a baseline (`without_skill/` for a new skill, or a snapshot of the old version in `old_skill/` when improving one). Launch them together so they finish together.
 - While they run, draft pass/fail checks (assertions) for the objectively verifiable parts, with descriptive names, and explain them to the user. Don't force checks onto subjective qualities.
-- As each worker finishes, record its duration and token use in `timing.json` if the host reports them.
+- As each worker finishes, record its duration and token use in `timing.json` when those figures are available.
 - Grade each run: script the checks where possible, otherwise judge against the outputs. Save `grading.json` with `text`, `passed`, `evidence` per check.
 - Summarize: pass rate, time and tokens for with-skill vs baseline, and patterns the averages hide (checks that pass either way, flaky tests, cost tradeoffs).
 
@@ -107,7 +112,7 @@ If isolated workers aren't available, run tests yourself one at a time and say t
 
 ## 5. Review in chat
 
-Present results in the conversation (no canvas): for each test, the prompt, a short description or excerpt of the output (attach output files), the check results, and then the overall comparison. Ask for feedback per test; silence on a test means it's fine. Save the feedback to `iteration-N/feedback.json` (`run_id`, `feedback`) so the next iteration can reference it.
+Present results in the conversation: for each test, the prompt, a short description or excerpt of the output (attach output files), the check results, and then the overall comparison. Ask for feedback per test; silence on a test means it's fine. Save the feedback to `iteration-N/feedback.json` (`run_id`, `feedback`) so the next iteration can reference it.
 
 ## 6. Improve and repeat
 
@@ -129,4 +134,4 @@ Before shipping, hand the draft to a fresh reviewer: a background worker with no
 ## 9. Ship
 
 - Updating an existing skill: keep its name and folder unchanged.
-- Save it where the host expects (the host's skill tool, or the skill's repo), and return the validated folder or link to the user.
+- Save it with this agent's other skills, or in the skill's repository, and return the validated folder or link to the user.

@@ -111,7 +111,14 @@ test("skill-creator reviews in chat and keeps unreferenced support files importa
   assert.ok(document.includes("### What a skill is not"));
   assert.ok(document.includes("### Pruning"));
   assert.ok(document.includes("## 8. Pruning review"));
-  assert.ok(document.includes("Present results in the conversation (no canvas)"));
+  assert.ok(document.includes("Present results in the conversation:"));
+  assert.ok(!/\bcanvas\b/i.test(document));
+  assert.ok(!/\bbots?\b/i.test(document));
+  assert.ok(!/\bhost\b/i.test(document));
+  assert.ok(document.includes("1-64 characters"));
+  assert.ok(document.includes("1-1024 characters"));
+  assert.ok(document.includes("1-500 characters"));
+  assert.ok(document.includes("allowed-tools"));
   assert.ok(!document.includes("skill-eval-review"));
   assert.ok(!document.includes("eval_review.html"));
   assert.ok(!document.includes("eval-viewer/generate_review.py"));
