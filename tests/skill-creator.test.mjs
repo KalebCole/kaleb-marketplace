@@ -14,8 +14,12 @@ const pluginRoot = path.join(repoRoot, "plugins", "kaleb-skills");
 const skillRoot = path.join(pluginRoot, "skills", "skill-creator");
 const run = promisify(execFile);
 
+async function readText(file) {
+  return (await readFile(file, "utf8")).replaceAll("\r\n", "\n");
+}
+
 async function provenance() {
-  const notices = await readFile(path.join(pluginRoot, "THIRD_PARTY_NOTICES.md"), "utf8");
+  const notices = await readText(path.join(pluginRoot, "THIRD_PARTY_NOTICES.md"));
   const section = notices.split("## `skill-creator`\n")[1]?.split(/\n## /)[0];
   assert.ok(section, "skill-creator must have its own provenance section");
   const commit = section.match(/Reviewed commit: `([0-9a-f]{40})`/)?.[1];
@@ -47,7 +51,7 @@ test("skill-creator files match the recorded source inventory", async () => {
 });
 
 test("skill-creator keeps valid invocation metadata", async () => {
-  const document = await readFile(path.join(skillRoot, "SKILL.md"), "utf8");
+  const document = await readText(path.join(skillRoot, "SKILL.md"));
   const match = document.match(/^---\n([\s\S]*?)\n---\n/);
   assert.ok(match, "skill must begin with YAML frontmatter");
   const metadata = yaml.load(match[1]);
@@ -58,9 +62,9 @@ test("skill-creator keeps valid invocation metadata", async () => {
 test("skill-creator support references and local Python imports are included", async () => {
   const { files } = await provenance();
   const reviewedFiles = new Set(files);
-  const document = await readFile(path.join(skillRoot, "SKILL.md"), "utf8");
+  const document = await readText(path.join(skillRoot, "SKILL.md"));
   const supportReferences = [
-    ...document.matchAll(/`((?:agents|references|assets|eval-viewer)\/[^`]+\.(?:md|html|py))`/g),
+    ...document.matchAll(/`((?:agents|references|assets)\/[^`]+\.(?:md|html|py))`/g),
   ].map((match) => match[1]);
   assert.ok(supportReferences.length > 0);
   for (const reference of supportReferences) {
@@ -76,7 +80,7 @@ test("skill-creator support references and local Python imports are included", a
   }
 
   for (const file of [...reviewedFiles].filter((file) => file.endsWith(".py"))) {
-    const source = await readFile(path.join(skillRoot, file), "utf8");
+    const source = await readText(path.join(skillRoot, file));
     for (const match of source.matchAll(/^from (scripts\.[a-z_]+) import /gm)) {
       assert.ok(
         reviewedFiles.has(`${match[1].replaceAll(".", "/")}.py`),
@@ -85,12 +89,7 @@ test("skill-creator support references and local Python imports are included", a
     }
   }
 
-  const generator = await readFile(path.join(skillRoot, "eval-viewer/generate_review.py"), "utf8");
-  const viewer = await readFile(path.join(skillRoot, "eval-viewer/viewer.html"), "utf8");
-  const review = await readFile(path.join(skillRoot, "assets/eval_review.html"), "utf8");
-  assert.ok(generator.includes('Path(__file__).parent / "viewer.html"'));
-  assert.ok(generator.includes('template.replace("/*__EMBEDDED_DATA__*/"'));
-  assert.ok(viewer.includes("/*__EMBEDDED_DATA__*/"));
+  const review = await readText(path.join(skillRoot, "assets/eval_review.html"));
   for (const placeholder of [
     "__EVAL_DATA_PLACEHOLDER__",
     "__SKILL_NAME_PLACEHOLDER__",
@@ -98,6 +97,9 @@ test("skill-creator support references and local Python imports are included", a
   ]) {
     assert.ok(review.includes(placeholder), `${placeholder} must remain in the template`);
   }
+  assert.ok(document.includes("Open the `skill-eval-review` canvas"));
+  assert.ok(document.includes('"evaluationId": "<skill-name>.iteration-1"'));
+  assert.ok(document.includes("Do not use the canvas `instanceId` as a data ID."));
   for (const retained of [
     "scripts/generate_report.py",
     "scripts/improve_description.py",
@@ -110,8 +112,9 @@ test("skill-creator support references and local Python imports are included", a
   assert.ok(document.includes("cover each distinct invocation branch"));
   assert.ok(document.includes("Avoid lists of duplicate trigger synonyms"));
   assert.ok(document.includes("Agents tend to under-trigger skills"));
-  assert.ok(document.includes("eval-viewer/generate_review.py"));
+  assert.ok(!document.includes("eval-viewer/generate_review.py"));
   assert.ok(document.includes("scripts.aggregate_benchmark"));
+  assert.ok(document.includes("python -m scripts.run_loop"));
 });
 
 test("skill-creator benchmark aggregator supports the documented single-run layout", async () => {
@@ -161,12 +164,13 @@ test("skill-creator records exact provenance and its directory-specific license"
     "locally maintained, platform-agnostic",
     "preserves the upstream workflow and bundled resources",
     "single-run evaluation layout",
+    "browser-server",
+    ".github/extensions/skill-eval-review/",
     "Python 3.10",
     "PyYAML",
     "claude -p",
     "Google Fonts",
-    "SheetJS 0.20.3",
-    "--static",
+    "requests no external",
   ]) {
     assert.ok(section.includes(text), `provenance must include ${text}`);
   }
@@ -174,10 +178,26 @@ test("skill-creator records exact provenance and its directory-specific license"
     assert.ok(section.includes(`\`skills/skill-creator/${file}\``), `${file} must be documented`);
   }
 
-  const license = await readFile(path.join(skillRoot, "LICENSE.txt"), "utf8");
+  const license = await readText(path.join(skillRoot, "LICENSE.txt"));
   assert.match(license, /Apache License\s+Version 2\.0, January 2004/);
   assert.ok(license.includes("Copyright 2026 Anthropic, PBC."));
   assert.ok(license.includes("4. Redistribution."));
   const manifest = JSON.parse(await readFile(path.join(pluginRoot, "plugin.json"), "utf8"));
   assert.equal(manifest.license, "MIT AND Apache-2.0");
+});
+
+test("skill-creator canvas extension package is complete", async () => {
+  const extensionRoot = path.join(repoRoot, ".github", "extensions", "skill-eval-review");
+  assert.deepEqual(await listFiles(extensionRoot), [
+    "extension.mjs",
+    "review-model.mjs",
+    "review-server.mjs",
+    "review.html",
+  ]);
+  const extension = await readText(path.join(extensionRoot, "extension.mjs"));
+  assert.ok(extension.includes('id: "skill-eval-review"'));
+  assert.ok(extension.includes("createCanvas"));
+  assert.ok(extension.includes("joinSession"));
+  assert.ok(extension.includes("evaluationId"));
+  assert.ok(extension.includes("workspacePath"));
 });
