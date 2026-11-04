@@ -26,7 +26,9 @@ requests and pushes to `main`. The validation includes:
 - local license and notice checks;
 - external revision and package marker checks;
 - Copilot catalog smoke validation;
-- Claude catalog validation when the Claude executable is available.
+- Claude catalog validation when the Claude executable is available;
+- an Azure CLI (`az`) install warning when `az` is missing. Validation still
+  passes.
 
 No result is described as proof of cross-client compatibility.
 

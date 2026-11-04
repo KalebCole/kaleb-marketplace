@@ -10,6 +10,12 @@ generated from this source.
 
 ## Install from the marketplace
 
+### Prerequisites
+
+Marketplace setup requires the
+[Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) (`az`).
+Use GitHub Copilot CLI, Codex, or Claude Code in the sections below.
+
 ### GitHub Copilot CLI
 
 ```bash
@@ -53,6 +59,8 @@ npx impeccable install
 npm ci
 bash scripts/validate-marketplace.sh
 ```
+
+That command warns when `az` is not installed.
 
 See [contributing](docs/contributing.md) and
 [maintenance](docs/maintenance.md).

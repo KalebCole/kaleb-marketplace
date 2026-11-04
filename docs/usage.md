@@ -10,6 +10,12 @@ project publishes its own installer.
 
 ## Marketplace registration
 
+### Prerequisites
+
+Marketplace setup requires the
+[Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) (`az`).
+The registration commands below use GitHub Copilot CLI, Codex, or Claude Code.
+
 ```bash
 copilot plugin marketplace add KalebCole/kaleb-marketplace
 claude plugin marketplace add KalebCole/kaleb-marketplace
