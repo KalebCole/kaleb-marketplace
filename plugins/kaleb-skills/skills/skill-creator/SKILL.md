@@ -33,6 +33,8 @@ If the conversation already contains the workflow ("turn this into a skill"), ex
 
 Ask about edge cases, inputs, example files, success criteria and dependencies before writing tests. Use available connectors and docs to research so the user carries less of the load.
 
+Before editing, copy the existing skill folder. Use that unchanged copy for the baseline runs.
+
 ## 2. Write the skill to the Agent Skills standard (agentskills.io)
 
 Every SKILL.md starts with YAML frontmatter, then markdown instructions. These fields and limits are the [Agent Skills spec](https://agentskills.io/specification):
@@ -102,17 +104,17 @@ Write 2-3 realistic prompts, the way a real user would phrase them, and show the
 
 Put results in `<skill-name>-workspace/iteration-N/<eval-name>/` next to the skill folder.
 
-- For each test, launch two background workers at the same time: one with the skill (`with_skill/outputs/`) and a baseline (`without_skill/` for a new skill, or a snapshot of the old version in `old_skill/` when improving one). Launch them together so they finish together.
+- For each test, launch two background workers at the same time: one with the skill (`with_skill/outputs/`) and a baseline (`without_skill/` for a new skill, or the unchanged copy in `old_skill/` when improving one). Launch them together so they finish together.
 - While they run, draft pass/fail checks (assertions) for the objectively verifiable parts, with descriptive names, and explain them to the user. Don't force checks onto subjective qualities.
 - As each worker finishes, record its duration and token use in `timing.json` when those figures are available.
 - Grade each run: script the checks where possible, otherwise judge against the outputs. Save `grading.json` with `text`, `passed`, `evidence` per check.
-- Summarize: pass rate, time and tokens for with-skill vs baseline, and patterns the averages hide (checks that pass either way, flaky tests, cost tradeoffs).
+- When the runs are independent, summarize pass rate, time and tokens for with-skill vs baseline, and patterns the averages hide (checks that pass either way, flaky tests, cost tradeoffs).
 
-If isolated workers aren't available, run tests yourself one at a time and say the comparison is less rigorous.
+If the runs are not independent, report each check and the user's feedback. Skip numerical comparisons.
 
 ## 5. Review in chat
 
-Present results in the conversation: for each test, the prompt, a short description or excerpt of the output (attach output files), the check results, and then the overall comparison. Ask for feedback per test; silence on a test means it's fine. Save the feedback to `iteration-N/feedback.json` (`run_id`, `feedback`) so the next iteration can reference it.
+Present results in the conversation: for each test, the prompt, a short description or excerpt of the output (attach output files), the check results, and then the overall comparison. Ask for feedback per test. An empty comment is acceptance only after the user confirms review is complete. Until then, a test with no feedback is not reviewed. Save the feedback to `iteration-N/feedback.json` (`run_id`, `feedback`) so the next iteration can reference it.
 
 ## 6. Improve and repeat
 
@@ -121,7 +123,7 @@ Present results in the conversation: for each test, the prompt, a short descript
 - Explain the why behind each instruction.
 - If every run reinvented the same helper, bundle it in `scripts/`.
 
-Rerun all tests into `iteration-N+1/` with baselines, review again, and stop when the user is happy, feedback is empty, or progress stalls.
+Rerun all tests into `iteration-N+1/` with baselines, review again, and stop when the user says they are happy, when they confirm review is complete and every comment is empty, or when progress stalls. Empty feedback alone does not stop the loop.
 
 ## 7. Description check (optional)
 

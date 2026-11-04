@@ -111,6 +111,12 @@ test("skill-creator reviews in chat and keeps unreferenced support files importa
   assert.ok(document.includes("### What a skill is not"));
   assert.ok(document.includes("### Pruning"));
   assert.ok(document.includes("## 8. Pruning review"));
+  assert.ok(document.includes("Before editing, copy the existing skill folder."));
+  assert.ok(document.includes("Skip numerical comparisons."));
+  assert.ok(document.includes("a test with no feedback is not reviewed"));
+  assert.ok(document.includes("Empty feedback alone does not stop the loop."));
+  assert.ok(!document.includes("silence on a test means it's fine"));
+  assert.ok(!document.includes("less rigorous"));
   assert.ok(document.includes("Present results in the conversation:"));
   assert.ok(!/\bcanvas\b/i.test(document));
   assert.ok(!/\bbots?\b/i.test(document));
