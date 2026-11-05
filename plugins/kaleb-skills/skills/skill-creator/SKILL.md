@@ -46,7 +46,7 @@ description: What this skill does and when to use it.
 ---
 ```
 
-- **name** (required): 1-64 characters. Unicode lowercase letters, digits, and hyphens only. Must not start or end with a hyphen, must not contain `--`, and must match the parent directory name.
+- **name** (required): 1-64 characters. Unicode lowercase letters, digits, and hyphens only. Must not start or end with a hyphen, must not contain `--`, and must match the parent directory name. Name a new skill verb-first, for the action it performs (`schedule-interview`, not `interview-scheduling`), so the name reads as what the agent will do.
 - **description** (required): 1-1024 characters. What the skill does and when to use it, with keywords an agent can match. This is the only field an agent sees when deciding to load the skill, so it is the trigger. Cover each distinct use. Agents under-trigger, so phrase it to catch implicit requests ("Use when the user asks to display metrics or trends in a dashboard", not "Build a dashboard"). No lists of synonyms, no workflow details.
 - **license** (optional): a short license name, or the name of a bundled license file, such as `Apache-2.0` or `Proprietary. LICENSE.txt has complete terms`.
 - **compatibility** (optional): 1-500 characters when present. Environment requirements only, such as an intended product, system packages, or network access. Omit it when the skill has none.
