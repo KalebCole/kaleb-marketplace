@@ -29,9 +29,9 @@ If the conversation already contains the workflow ("turn this into a skill"), ex
 1. What should the skill let an agent do?
 2. When should it trigger (phrases, contexts)?
 3. What is the output format?
-4. Does it need test cases? Objectively checkable outputs (file transforms, data extraction, fixed workflow steps) benefit; subjective ones (writing style) often don't. Suggest a default, let the user decide.
+4. Choose tests when outputs or workflow steps are objectively checkable. Skip formal tests when the user requests a draft-only or informal session. Do not ask the user to choose routine validation steps.
 
-Ask about edge cases, inputs, example files, success criteria and dependencies before writing tests. Use available connectors and docs to research so the user carries less of the load.
+Ask about unresolved edge cases, inputs, example files, success criteria and dependencies that would change the expected result. Use available connectors and docs to research so the user carries less of the load.
 
 Before editing, copy the existing skill folder. Use that unchanged copy for the baseline runs.
 
@@ -94,7 +94,9 @@ Describe only the functionality: how to do the job. Drop limits, caveats and sco
 
 ## 3. Test cases
 
-Write 2-3 realistic prompts, the way a real user would phrase them, and show them to the user: "here are the tests I want to run, look right?" Save them to `evals/evals.json`:
+Write 2-3 realistic test prompts from the confirmed requirements and save them to `evals/evals.json`. Select the cases and run isolated tests without asking the user to approve them. You may briefly state what the tests cover, but do not pause for a response.
+
+Ask a question only when an unresolved requirement would change the expected result. Follow applicable approval rules if a test needs live uploads, external changes, or other consequential actions.
 
 ```json
 {"skill_name": "example-skill", "evals": [{"id": 1, "prompt": "...", "expected_output": "...", "files": []}]}
