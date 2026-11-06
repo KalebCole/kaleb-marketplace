@@ -59,6 +59,23 @@ test("skill-creator keeps valid invocation metadata", async () => {
   assert.ok(metadata.description);
 });
 
+test("skill-creator delegates routine tests and retains consequential-action approval and result review", async () => {
+  const document = await readText(path.join(skillRoot, "SKILL.md"));
+  assert.ok(document.includes("Choose tests when outputs or workflow steps are objectively checkable."));
+  assert.ok(document.includes("Skip formal tests when the user requests a draft-only or informal session."));
+  assert.ok(document.includes("Do not ask the user to choose routine validation steps."));
+  assert.ok(document.includes("Select the cases and run isolated tests without asking the user to approve them."));
+  assert.ok(document.includes("do not pause for a response."));
+  assert.ok(document.includes("Ask a question only when an unresolved requirement would change the expected result."));
+  assert.ok(document.includes("Follow applicable approval rules if a test needs live uploads, external changes, or other consequential actions."));
+  assert.ok(!document.includes("Suggest a default, let the user decide."));
+  assert.ok(!document.includes("here are the tests I want to run, look right?"));
+  assert.ok(document.includes("Ask about unresolved edge cases, inputs, example files, success criteria and dependencies"));
+  assert.ok(document.includes('{"skill_name": "example-skill", "evals": [{"id": 1, "prompt": "...", "expected_output": "...", "files": []}]}'));
+  assert.ok(document.includes("Ask for feedback per test."));
+  assert.ok(document.includes("a test with no feedback is not reviewed"));
+});
+
 test("skill-creator reviews in chat and keeps unreferenced support files importable", async () => {
   const { files } = await provenance();
   const reviewedFiles = new Set(files);
