@@ -59,25 +59,19 @@ test("skill-creator keeps valid invocation metadata", async () => {
   assert.ok(metadata.description);
 });
 
-test("skill-creator support references and local Python imports are included", async () => {
+test("skill-creator reviews in chat and keeps unreferenced support files importable", async () => {
   const { files } = await provenance();
   const reviewedFiles = new Set(files);
   const document = await readText(path.join(skillRoot, "SKILL.md"));
   const supportReferences = [
     ...document.matchAll(/`((?:agents|references|assets)\/[^`]+\.(?:md|html|py))`/g),
   ].map((match) => match[1]);
-  assert.ok(supportReferences.length > 0);
-  for (const reference of supportReferences) {
-    assert.ok(reviewedFiles.has(reference), `${reference} must be bundled`);
-  }
+  assert.deepEqual(supportReferences, []);
 
   const moduleCommands = [
     ...document.matchAll(/python -m (scripts\.[a-z_]+)/g),
   ].map((match) => match[1]);
-  assert.ok(moduleCommands.length > 0);
-  for (const module of moduleCommands) {
-    assert.ok(reviewedFiles.has(`${module.replaceAll(".", "/")}.py`));
-  }
+  assert.deepEqual(moduleCommands, []);
 
   for (const file of [...reviewedFiles].filter((file) => file.endsWith(".py"))) {
     const source = await readText(path.join(skillRoot, file));
@@ -97,24 +91,45 @@ test("skill-creator support references and local Python imports are included", a
   ]) {
     assert.ok(review.includes(placeholder), `${placeholder} must remain in the template`);
   }
-  assert.ok(document.includes("Open the `skill-eval-review` canvas"));
-  assert.ok(document.includes('"evaluationId": "<skill-name>.iteration-1"'));
-  assert.ok(document.includes("Do not use the canvas `instanceId` as a data ID."));
   for (const retained of [
+    "agents/analyzer.md",
+    "agents/comparator.md",
+    "agents/grader.md",
+    "assets/eval_review.html",
+    "references/schemas.md",
+    "scripts/aggregate_benchmark.py",
     "scripts/generate_report.py",
     "scripts/improve_description.py",
+    "scripts/package_skill.py",
+    "scripts/quick_validate.py",
     "scripts/run_eval.py",
     "scripts/run_loop.py",
   ]) {
     assert.ok(reviewedFiles.has(retained), `${retained} must remain in the inventory`);
   }
-  assert.ok(document.includes("Include only the information needed to decide whether to load the skill."));
-  assert.ok(document.includes("cover each distinct invocation branch"));
-  assert.ok(document.includes("Avoid lists of duplicate trigger synonyms"));
-  assert.ok(document.includes("Agents tend to under-trigger skills"));
+  assert.ok(document.includes("agentskills.io"));
+  assert.ok(document.includes("### What a skill is not"));
+  assert.ok(document.includes("### Pruning"));
+  assert.ok(document.includes("## 8. Pruning review"));
+  assert.ok(document.includes("Before editing, copy the existing skill folder."));
+  assert.ok(document.includes("Skip numerical comparisons."));
+  assert.ok(document.includes("a test with no feedback is not reviewed"));
+  assert.ok(document.includes("Empty feedback alone does not stop the loop."));
+  assert.ok(!document.includes("silence on a test means it's fine"));
+  assert.ok(!document.includes("less rigorous"));
+  assert.ok(document.includes("Present results in the conversation:"));
+  assert.ok(!/\bcanvas\b/i.test(document));
+  assert.ok(!/\bbots?\b/i.test(document));
+  assert.ok(!/\bhost\b/i.test(document));
+  assert.ok(document.includes("1-64 characters"));
+  assert.ok(document.includes("1-1024 characters"));
+  assert.ok(document.includes("1-500 characters"));
+  assert.ok(document.includes("allowed-tools"));
+  assert.ok(!document.includes("skill-eval-review"));
+  assert.ok(!document.includes("eval_review.html"));
   assert.ok(!document.includes("eval-viewer/generate_review.py"));
-  assert.ok(document.includes("scripts.aggregate_benchmark"));
-  assert.ok(document.includes("python -m scripts.run_loop"));
+  assert.ok(!document.includes("scripts.aggregate_benchmark"));
+  assert.ok(!document.includes("python -m scripts.run_loop"));
 });
 
 test("skill-creator benchmark aggregator supports the documented single-run layout", async () => {
@@ -162,10 +177,12 @@ test("skill-creator records exact provenance and its directory-specific license"
     "Apache-2.0",
     "Automated source updates: `disabled`",
     "locally maintained, platform-agnostic",
-    "preserves the upstream workflow and bundled resources",
+    "reviews results in the conversation",
+    "does not open a review canvas",
     "single-run evaluation layout",
     "browser-server",
     ".github/extensions/skill-eval-review/",
+    "unused by `SKILL.md`",
     "Python 3.10",
     "PyYAML",
     "claude -p",
