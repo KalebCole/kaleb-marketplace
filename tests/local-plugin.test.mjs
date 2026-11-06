@@ -147,6 +147,7 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
   assert.deepEqual(skillDirectories, [
     "already-grilled",
     "bro",
+    "cli-design",
     "find-context7-docs",
     "make-this-clear",
     "obsidian-cli",
