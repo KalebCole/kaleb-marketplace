@@ -3,6 +3,8 @@ set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+bash "$root/scripts/check-azure-cli.sh"
+
 node "$root/scripts/catalog.mjs" validate
 node "$root/scripts/catalog.mjs" check
 npm test

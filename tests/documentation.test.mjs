@@ -46,6 +46,21 @@ test("browse documentation excludes removed catalog items", async () => {
   }
 });
 
+test("install docs require the Azure CLI", async () => {
+  for (const file of ["README.md", "docs/usage.md"]) {
+    const document = await readFile(path.join(root, file), "utf8");
+    const azureAt = document.search(/Azure CLI/);
+    const copilotAt = document.search(/copilot plugin marketplace add/);
+    assert.ok(azureAt !== -1 && azureAt < copilotAt, `${file} lists Azure CLI before the client commands`);
+    assert.match(document, /Marketplace setup requires the/);
+    assert.match(document, /\[Azure CLI\]\(https:\/\/learn\.microsoft\.com\/cli\/azure\/install-azure-cli\) \(`az`\)/);
+    assert.match(document, /GitHub Copilot CLI, Codex, or Claude Code/);
+  }
+
+  const validator = await readFile(path.join(root, "scripts/validate-marketplace.sh"), "utf8");
+  assert.match(validator, /bash "\$root\/scripts\/check-azure-cli\.sh"/);
+});
+
 test("Codex documentation separates marketplace registration from installation", async () => {
   for (const file of ["README.md", "docs/usage.md"]) {
     const document = await readFile(path.join(root, file), "utf8");
