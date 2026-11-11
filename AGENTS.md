@@ -32,5 +32,14 @@ Run the complete repository check before review:
 
 ```bash
 npm ci
-bash scripts/validate-marketplace.sh
+npm run check
 ```
+
+Use Node.js 22 or later, Git, and Python 3.10 or later. The same commands run
+on Windows, macOS, and Linux. Preserve LF line endings as set by
+`.gitattributes`; do not normalize exact generated-output comparisons.
+
+The default check is offline and must not install plugins or change client
+settings. Check upstream branches and package markers separately with
+`npm run check:live`. Use the explicit client flags only when client checks
+are requested. See `docs/maintenance.md`.

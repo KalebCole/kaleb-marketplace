@@ -1,16 +1,19 @@
 #!/usr/bin/env node
 
 import { lstat, readFile, readdir, realpath } from "node:fs/promises";
+import { execFile } from "node:child_process";
 import path from "node:path";
 import process from "node:process";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { parseArgs, promisify } from "node:util";
 
 import Ajv2020 from "ajv/dist/2020.js";
 import yaml from "js-yaml";
 
-import { loadCanonicalCatalog } from "./catalog.mjs";
+import { checkGeneratedFiles, loadCanonicalCatalog } from "./catalog.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+const run = promisify(execFile);
 const externalMarkers = {
   "kaleb-skills": [
     "plugins/kaleb-skills/plugin.json",
@@ -50,7 +53,7 @@ function githubRepo(url) {
 }
 
 function parseSkillFrontmatter(document, filePath) {
-  const match = document.match(/^---\n([\s\S]*?)\n---\n/);
+  const match = document.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
   if (!match) {
     throw new Error(`${filePath} must start with YAML frontmatter`);
   }
@@ -158,7 +161,7 @@ export async function verifyExternalSource(entry, fetchImpl = fetch) {
   const repo = githubRepo(entry.source.url);
   const headers = githubHeaders();
   const commitUrl = `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(revision)}`;
-  await requireResponse(await fetchImpl(commitUrl, { headers }), entry, "commit");
+  await requireResponse(await fetchImpl(commitUrl, { headers, signal: AbortSignal.timeout(30_000) }), entry, "commit");
 
   const markers = externalMarkers[entry.name];
   if (!markers) {
@@ -168,26 +171,44 @@ export async function verifyExternalSource(entry, fetchImpl = fetch) {
     const markerUrl =
       `https://api.github.com/repos/${repo}/contents/${marker}` +
       `?ref=${encodeURIComponent(revision)}`;
-    await requireResponse(await fetchImpl(markerUrl, { headers }), entry, marker);
+    await requireResponse(await fetchImpl(markerUrl, { headers, signal: AbortSignal.timeout(30_000) }), entry, marker);
   }
 }
 
 export async function validateMarketplace(
   repoRoot = root,
-  fetchImpl = fetch,
 ) {
   const catalog = await loadCanonicalCatalog(repoRoot);
+  await checkGeneratedFiles(repoRoot, catalog);
+  await validateLineEndings(repoRoot);
   await validateLocalPlugins(repoRoot, catalog);
-  await Promise.all(
-    catalog.plugins.map((entry) => verifyExternalSource(entry, fetchImpl)),
-  );
   console.log(
-    `Validated ${catalog.plugins.length} catalog entries and all package layouts`,
+    `Validated ${catalog.plugins.length} catalog entries, local packages, and LF policy (offline)`,
   );
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  validateMarketplace().catch((error) => {
+export async function validateLineEndings(repoRoot) {
+  const { stdout } = await run("git", ["ls-files", "--eol", "-z"], {
+    cwd: repoRoot,
+    maxBuffer: 8 * 1024 * 1024,
+  });
+  const invalid = stdout.split("\0").filter((entry) => {
+    const metadata = entry.split("\t")[0];
+    return /\b(?:i|w)\/(?:crlf|mixed)\b/.test(metadata);
+  });
+  if (invalid.length) {
+    throw new Error(
+      `Repository text must use LF; normalize these files without changing their content:\n` +
+      invalid.map((entry) => entry.slice(entry.indexOf("\t") + 1)).join("\n"),
+    );
+  }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  (async () => {
+    const { values } = parseArgs({ options: { root: { type: "string" } } });
+    await validateMarketplace(values.root ? path.resolve(values.root) : root);
+  })().catch((error) => {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
   });

@@ -204,7 +204,7 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
         const files = [];
         const visit = async (directory, relative = "") => {
           for (const entry of await readdir(directory, { withFileTypes: true })) {
-            const childPath = path.join(relative, entry.name);
+            const childPath = path.posix.join(relative, entry.name);
             if (entry.isDirectory()) {
               await visit(path.join(directory, entry.name), childPath);
             } else {

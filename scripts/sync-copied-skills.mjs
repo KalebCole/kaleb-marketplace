@@ -4,12 +4,11 @@ import { execFile } from "node:child_process";
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { promisify } from "node:util";
+import { parseArgs, promisify } from "node:util";
+import { pathToFileURL } from "node:url";
 
 const run = promisify(execFile);
 const root = path.resolve(import.meta.dirname, "..");
-const pluginRoot = path.join(root, "plugins/kaleb-skills");
-const noticesPath = path.join(pluginRoot, "THIRD_PARTY_NOTICES.md");
 const shaPattern = /^[0-9a-f]{40}$/;
 
 function field(section, name) {
@@ -62,11 +61,12 @@ export function sourceDetails(section) {
 export function adaptSkillFile(file, content, source) {
   if (file !== "SKILL.md" || source.sourceName === source.name) return content;
   const text = content.toString("utf8");
-  const original = `---\nname: ${source.sourceName}\n`;
+  const newline = text.startsWith("---\r\n") ? "\r\n" : "\n";
+  const original = `---${newline}name: ${source.sourceName}${newline}`;
   if (!text.startsWith(original)) {
     throw new Error(`Missing source skill name in ${source.name}`);
   }
-  return Buffer.from(text.replace(original, `---\nname: ${source.name}\n`));
+  return Buffer.from(text.replace(original, `---${newline}name: ${source.name}${newline}`));
 }
 
 async function listFiles(directory, prefix = "") {
@@ -123,9 +123,13 @@ export function updateSection(section, nextCommit, files) {
   return body;
 }
 
-export async function syncCopiedSkills({ dryRun = false } = {}) {
+export async function syncCopiedSkills({ dryRun = false, repoRoot = root } = {}) {
+  const pluginRoot = path.join(repoRoot, "plugins", "kaleb-skills");
+  const noticesPath = path.join(pluginRoot, "THIRD_PARTY_NOTICES.md");
   let notices = await readFile(noticesPath, "utf8");
-  const sources = sections(notices).map(sourceDetails)
+  const sourceSections = sections(notices);
+  if (!sourceSections.length) throw new Error("No source sections found in third-party notices");
+  const sources = sourceSections.map(sourceDetails)
     .filter(({ automatedUpdates }) => automatedUpdates);
   const tempRoot = await mkdtemp(path.join(tmpdir(), "kaleb-skill-sync-"));
   const updates = [];
@@ -136,7 +140,10 @@ export async function syncCopiedSkills({ dryRun = false } = {}) {
       const key = `${source.url}#${source.branch}`;
       if (repositories.has(key)) continue;
       const checkout = path.join(tempRoot, String(repositories.size));
-      await run("git", ["clone", "--quiet", "--depth", "1", "--branch", source.branch, source.url, checkout]);
+      await run("git", [
+        "-c", "core.autocrlf=false", "-c", "core.eol=lf",
+        "clone", "--quiet", "--depth", "1", "--branch", source.branch, source.url, checkout,
+      ]);
       const { stdout } = await run("git", ["-C", checkout, "rev-parse", "HEAD"]);
       const commit = stdout.trim();
       if (!shaPattern.test(commit)) throw new Error(`Invalid upstream commit for ${source.url}`);
@@ -155,7 +162,9 @@ export async function syncCopiedSkills({ dryRun = false } = {}) {
       const { stdout: oldLicense } = await run("git", [
         "-C", checkout, "show", `${source.commit}:${source.licensePath}`,
       ]);
-      const newLicense = await readFile(path.join(checkout, source.licensePath), "utf8");
+      const { stdout: newLicense } = await run("git", [
+        "-C", checkout, "show", `${commit}:${source.licensePath}`,
+      ]);
       if (oldLicense !== newLicense) {
         throw new Error(`${source.name} upstream license changed; review it before copying`);
       }
@@ -176,8 +185,16 @@ export async function syncCopiedSkills({ dryRun = false } = {}) {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  syncCopiedSkills({ dryRun: process.argv.includes("--dry-run") })
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  Promise.resolve().then(() => {
+    const { values } = parseArgs({
+      options: { "dry-run": { type: "boolean" }, root: { type: "string" } },
+    });
+    return syncCopiedSkills({
+      dryRun: values["dry-run"],
+      repoRoot: values.root ? path.resolve(values.root) : root,
+    });
+  })
     .then((updates) => console.log(JSON.stringify(updates, null, 2)))
     .catch((error) => {
       console.error(error instanceof Error ? error.message : String(error));

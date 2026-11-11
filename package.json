@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "test": "node --test",
     "generate": "node scripts/catalog.mjs generate",
-    "check": "bash scripts/validate-marketplace.sh"
+    "check": "node scripts/check.mjs",
+    "check:live": "node scripts/check-live.mjs"
   },
   "devDependencies": {
     "ajv": "8.20.0",

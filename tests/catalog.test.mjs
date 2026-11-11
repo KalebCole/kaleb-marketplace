@@ -1,10 +1,6 @@
 import assert from "node:assert/strict";
-import { readFile, rm, mkdir, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { tmpdir } from "node:os";
-import { fileURLToPath } from "node:url";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
+import { readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import test from "node:test";
 
 import {
@@ -12,12 +8,10 @@ import {
   generateCopilotCatalog,
   renderJson,
 } from "../scripts/catalog.mjs";
+import { catalogFixture, repoRoot, run } from "./fixtures.mjs";
 
-const execFileAsync = promisify(execFile);
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-const scratchRoot = join(tmpdir(), "kaleb-marketplace-tests");
 const scriptPath = join(repoRoot, "scripts", "catalog.mjs");
-const validateScriptPath = join(repoRoot, "scripts", "validate-marketplace.sh");
+const validateScriptPath = join(repoRoot, "scripts", "check.mjs");
 
 const baseCatalog = {
   name: "kaleb-marketplace",
@@ -179,17 +173,7 @@ test("generateCopilotCatalog rejects unmappable external archive URLs", () => {
   );
 });
 
-test("validate rejects canonical external URLs that Copilot cannot map", async () => {
-  const caseRoot = join(scratchRoot, "catalog-validate-unmappable");
-  await rm(caseRoot, { recursive: true, force: true });
-  await mkdir(join(caseRoot, ".agents", "plugins"), { recursive: true });
-  await mkdir(join(caseRoot, "schemas"), { recursive: true });
-
-  const schema = await readFile(
-    join(repoRoot, "schemas", "marketplace.schema.json"),
-    "utf8",
-  );
-
+test("validate rejects canonical external URLs that Copilot cannot map", async (t) => {
   const catalog = {
     ...baseCatalog,
     plugins: [
@@ -209,19 +193,10 @@ test("validate rejects canonical external URLs that Copilot cannot map", async (
     ],
   };
 
-  await writeFile(
-    join(caseRoot, "schemas", "marketplace.schema.json"),
-    schema,
-    "utf8",
-  );
-  await writeFile(
-    join(caseRoot, ".agents", "plugins", "marketplace.json"),
-    renderJson(catalog),
-    "utf8",
-  );
+  const caseRoot = await catalogFixture(t, catalog.plugins);
 
   await assert.rejects(
-    () => execFileAsync("node", [scriptPath, "validate"], { cwd: caseRoot }),
+    () => run(process.execPath, [scriptPath, "validate"], { cwd: caseRoot }),
     (error) => {
       const output = `${error.stdout ?? ""}\n${error.stderr ?? ""}`;
       assert.match(output, /Copilot cannot map|cannot be mapped for Copilot/);
@@ -234,19 +209,7 @@ test("renderJson uses deterministic indentation and newline", () => {
   assert.equal(renderJson({ name: "x" }), '{\n  "name": "x"\n}\n');
 });
 
-test("check reports the exact drifted output path", async () => {
-  const caseRoot = join(scratchRoot, "catalog-drift");
-  await rm(caseRoot, { recursive: true, force: true });
-  await mkdir(join(caseRoot, ".agents", "plugins"), { recursive: true });
-  await mkdir(join(caseRoot, ".github", "plugin"), { recursive: true });
-  await mkdir(join(caseRoot, ".claude-plugin"), { recursive: true });
-  await mkdir(join(caseRoot, "schemas"), { recursive: true });
-
-  const schema = await readFile(
-    join(repoRoot, "schemas", "marketplace.schema.json"),
-    "utf8",
-  );
-
+test("CLI generation writes both exact client catalogs and detects drift without rewriting", async (t) => {
   const catalog = {
     ...baseCatalog,
     plugins: [
@@ -265,18 +228,19 @@ test("check reports the exact drifted output path", async () => {
     ],
   };
 
-  await writeFile(
-    join(caseRoot, "schemas", "marketplace.schema.json"),
-    schema,
-    "utf8",
+  const caseRoot = await catalogFixture(t, catalog.plugins);
+  const { stdout } = await run(process.execPath, [scriptPath, "generate"], { cwd: caseRoot });
+  assert.match(stdout, /Generated both client catalogs/);
+  assert.equal(
+    await readFile(join(caseRoot, ".github", "plugin", "marketplace.json"), "utf8"),
+    renderJson(generateCopilotCatalog(catalog)),
   );
-  await writeFile(
-    join(caseRoot, ".agents", "plugins", "marketplace.json"),
-    renderJson(catalog),
-    "utf8",
+  assert.equal(
+    await readFile(join(caseRoot, ".claude-plugin", "marketplace.json"), "utf8"),
+    renderJson(generateClaudeCatalog(catalog)),
   );
-
-  await execFileAsync("node", [scriptPath, "generate"], { cwd: caseRoot });
+  const checked = await run(process.execPath, [scriptPath, "check"], { cwd: caseRoot });
+  assert.match(checked.stdout, /Generated catalogs match/);
 
   const generatedPath = join(caseRoot, ".github", "plugin", "marketplace.json");
   const generated = await readFile(generatedPath, "utf8");
@@ -287,35 +251,32 @@ test("check reports the exact drifted output path", async () => {
   );
 
   await assert.rejects(
-    () => execFileAsync("node", [scriptPath, "check"], { cwd: caseRoot }),
+    () => run(process.execPath, [scriptPath, "check"], { cwd: caseRoot }),
     (error) => {
       const output = `${error.stdout ?? ""}\n${error.stderr ?? ""}`;
       assert.match(output, /\.github\/plugin\/marketplace\.json/);
       return true;
     },
   );
+  assert.equal(await readFile(generatedPath, "utf8"), generated.replace("kaleb-marketplace", "kaleb-marketplacE"));
 });
 
-test("validate-marketplace fails on drift without rewriting generated files", async () => {
-  const generatedPath = join(repoRoot, ".github", "plugin", "marketplace.json");
+test("full check fails on fixture drift before running tests and leaves it unchanged", async (t) => {
+  const caseRoot = await catalogFixture(t);
+  await run(process.execPath, [scriptPath, "generate"], { cwd: caseRoot });
+  const generatedPath = join(caseRoot, ".github", "plugin", "marketplace.json");
   const original = await readFile(generatedPath, "utf8");
   const drifted = original.replace("kaleb-marketplace", "kaleb-marketplacE");
 
   await writeFile(generatedPath, drifted, "utf8");
 
-  try {
-    let failure;
-    try {
-      await execFileAsync("bash", [validateScriptPath], { cwd: repoRoot });
-    } catch (error) {
-      failure = error;
-    }
-
-    assert.ok(failure, "validate-marketplace should fail when generated output drifts");
-    const output = `${failure.stdout ?? ""}\n${failure.stderr ?? ""}`;
-    assert.match(output, /\.github\/plugin\/marketplace\.json/);
-    assert.equal(await readFile(generatedPath, "utf8"), drifted);
-  } finally {
-    await writeFile(generatedPath, original, "utf8");
-  }
+  await assert.rejects(
+    () => run(process.execPath, [validateScriptPath, "--root", caseRoot], { cwd: caseRoot }),
+    (error) => {
+      assert.match(error.stderr, /\.github\/plugin\/marketplace\.json/);
+      assert.doesNotMatch(error.stdout, /tests|PASS/);
+      return true;
+    },
+  );
+  assert.equal(await readFile(generatedPath, "utf8"), drifted);
 });
