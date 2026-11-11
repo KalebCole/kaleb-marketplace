@@ -27,6 +27,11 @@ const externalMarkers = {
     "plugins/visual-explainer/SKILL.md",
     "LICENSE",
   ],
+  "show-me": [
+    "plugins/show-me/.claude-plugin/plugin.json",
+    "plugins/show-me/skills/show-me/SKILL.md",
+    "LICENSE",
+  ],
   "i-have-adhd": [
     "plugin.json",
     ".agents/plugins/marketplace.json",

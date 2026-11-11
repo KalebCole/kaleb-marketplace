@@ -9,6 +9,33 @@ import {
   validateSkill,
   verifyExternalSource,
 } from "../scripts/validate-marketplace.mjs";
+import { loadCanonicalCatalog } from "../scripts/catalog.mjs";
+
+test("show-me validates its upstream subdirectory package and rejects missing skills", async () => {
+  const catalog = await loadCanonicalCatalog();
+  const entry = catalog.plugins.find((plugin) => plugin.name === "show-me");
+  const requested = [];
+
+  await verifyExternalSource(entry, async (url) => {
+    requested.push(url);
+    return { ok: true };
+  });
+
+  assert.deepEqual(requested, [
+    "https://api.github.com/repos/humanlayer/skills/commits/main",
+    "https://api.github.com/repos/humanlayer/skills/contents/plugins/show-me/.claude-plugin/plugin.json?ref=main",
+    "https://api.github.com/repos/humanlayer/skills/contents/plugins/show-me/skills/show-me/SKILL.md?ref=main",
+    "https://api.github.com/repos/humanlayer/skills/contents/LICENSE?ref=main",
+  ]);
+  await assert.rejects(
+    () => verifyExternalSource(entry, async (url) => ({
+      ok: !url.includes("/skills/show-me/SKILL.md"),
+      status: 404,
+      statusText: "Not Found",
+    })),
+    /show-me.*SKILL\.md.*not available/,
+  );
+});
 
 test("validateSkill rejects a frontmatter name that differs from its directory", async (t) => {
   const root = await mkdtemp(path.join(os.tmpdir(), "kaleb-skill-"));
