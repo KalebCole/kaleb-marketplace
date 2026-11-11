@@ -5,6 +5,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import yaml from "js-yaml";
+import { sections, sourceDetails } from "../scripts/sync-copied-skills.mjs";
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pluginRoot = path.join(repoRoot, "plugins", "kaleb-skills");
@@ -138,7 +139,7 @@ function parseFrontmatter(document) {
   return yaml.load(match[1]);
 }
 
-test("kaleb-skills plugin ships the frozen reviewed skills and notices", async () => {
+test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (t) => {
   const skillDirectories = (await readdir(skillRoot, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
@@ -160,14 +161,30 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
   assert.equal(manifest.name, "kaleb-skills");
 
   const notices = await readFile(path.join(pluginRoot, "THIRD_PARTY_NOTICES.md"), "utf8");
-  assert.match(notices, /dmmulroy\/skills/);
-  assert.match(notices, /8603380821fee6a77c82639f364ce8fe4f5a92be/);
-  assert.match(notices, /kepano\/obsidian-skills/);
-  assert.match(notices, /upstash\/context7/);
-  assert.equal(
-    (notices.match(/3ccff5338ea700537839b21900aa5358a0402c98/g) ?? []).length,
-    2,
-  );
+  const updatedNotices = sections(notices).map(sourceDetails)
+    .filter(({ automatedUpdates }) => automatedUpdates)
+    .map((source) => [
+      `${source.name} revision update`,
+      notices.replace(source.body, source.body.replaceAll(source.commit, "a".repeat(40))),
+    ]);
+  for (const [label, document] of [["stored provenance", notices], ...updatedNotices]) {
+    await t.test(label, () => {
+      assert.deepEqual(
+        sections(document).map(sourceDetails).map(({ name, url }) => [name, url]),
+        [
+          ["bro", "https://github.com/dmmulroy/skills"],
+          ["find-context7-docs", "https://github.com/upstash/context7"],
+          ["skill-creator", "https://github.com/anthropics/skills"],
+          ["obsidian-cli", "https://github.com/kepano/obsidian-skills"],
+          ["obsidian-markdown", "https://github.com/kepano/obsidian-skills"],
+        ],
+      );
+    });
+  }
+  await t.test("invalid reviewed commit is rejected", () => {
+    const invalid = notices.replace(/- Reviewed commit: `[0-9a-f]{40}`/, "- Reviewed commit: `invalid`");
+    assert.throws(() => sections(invalid).map(sourceDetails), /Invalid reviewed commit/);
+  });
   assert.match(notices, /Copyright \(c\) 2026 Steph Ango \(@kepano\)/);
   assert.match(notices, /references\/CALLOUTS\.md/);
   assert.match(notices, /references\/EMBEDS\.md/);
