@@ -37,6 +37,16 @@
       "category": "Productivity"
     },
     {
+      "name": "show-me",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/humanlayer/skills.git",
+        "path": "plugins/show-me",
+        "ref": "main"
+      },
+      "category": "Productivity"
+    },
+    {
       "name": "i-have-adhd",
       "source": {
         "source": "url",
