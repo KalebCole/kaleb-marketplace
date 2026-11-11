@@ -96,8 +96,9 @@ upstream paths. The bundled entry point is `python -m scripts.package_skill`.
 `.claude/commands/`. `SKILL.md` does not run that loop. The trigger-review
 HTML template requests Google Fonts. It requests no external scripts. The
 remote fonts are not copied into this plugin and require network access.
-Repository validation does not execute the bundled Python helpers or make
-model calls.
+Repository validation executes the benchmark aggregator with temporary fixture
+data and bytecode writes disabled. It does not make model calls or run the
+Claude-dependent helpers.
 
 ## `obsidian-cli`
 

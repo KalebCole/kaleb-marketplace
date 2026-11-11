@@ -41,3 +41,11 @@ test("copied skill updater records a new commit and complete copied file list", 
   assert.match(next, /- Copied files:\n  - `skills\/bro\/SKILL.md`\n  - `skills\/bro\/references\/example.md`/);
   assert.doesNotMatch(next, /- Copied file: `skills\/bro\/SKILL.md`/);
 });
+
+test("renaming upstream CRLF skill metadata preserves its line endings", () => {
+  const input = Buffer.from("---\r\nname: find-docs\r\ndescription: Example\r\n---\r\nBody\r\n");
+  assert.equal(
+    adaptSkillFile("SKILL.md", input, { name: "find-context7-docs", sourceName: "find-docs" }).toString(),
+    "---\r\nname: find-context7-docs\r\ndescription: Example\r\n---\r\nBody\r\n",
+  );
+});

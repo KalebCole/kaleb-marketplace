@@ -169,14 +169,23 @@ test("skill-creator benchmark aggregator supports the documented single-run layo
     await writeFile(path.join(evalDir, "with_skill", "grading.json"), grading(true));
     await writeFile(path.join(evalDir, "without_skill", "grading.json"), grading(false));
 
-    await run("python", [
-      "-m", "scripts.aggregate_benchmark", workspace, "--skill-name", "fixture-skill",
+    const python = process.env.PYTHON ?? (process.platform === "win32" ? "python" : "python3");
+    await run(python, [
+      "-B", "-c", "import sys; sys.exit('Python 3.10 or later is required' if sys.version_info < (3, 10) else 0)",
+    ]);
+    await run(python, [
+      "-B", "-m", "scripts.aggregate_benchmark", workspace, "--skill-name", "fixture-skill",
     ], { cwd: skillRoot });
     const benchmark = JSON.parse(await readFile(path.join(workspace, "benchmark.json"), "utf8"));
     assert.equal(benchmark.runs.length, 2);
     assert.equal(benchmark.run_summary.with_skill.pass_rate.mean, 1);
     assert.equal(benchmark.run_summary.without_skill.pass_rate.mean, 0);
     assert.equal(benchmark.runs[0].eval_id, 7);
+    assert.deepEqual(
+      await listFiles(skillRoot),
+      (await provenance()).files.sort(),
+      "benchmark execution must not add bytecode or other files to the stored skill",
+    );
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }

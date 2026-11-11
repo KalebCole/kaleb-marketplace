@@ -35,13 +35,31 @@ Run:
 
 ```bash
 npm ci
-npm test
-node scripts/catalog.mjs generate
-bash scripts/validate-marketplace.sh
+npm run generate
+npm run check
+npm run check:live
 ```
+
+Use Node.js 22 or later, Git, and Python 3.10 or later on Windows, macOS, or
+Linux. `npm run check` is deterministic and offline. It checks generated
+files without rewriting them. `npm run check:live` checks current upstream
+branches and package markers; it does not install clients or plugins by
+default.
 
 Commit all three catalogs together. Do not edit a generated client catalog by
 hand.
+
+## Line endings and tests
+
+Repository text uses LF on all operating systems. `.gitattributes` overrides
+`core.autocrlf` for new checkouts. For an older checkout with CRLF files,
+preserve pending edits and convert only the listed text files to LF without
+changing their content. Do not reset the checkout or stage unrelated files.
+
+Keep exact comparisons for generated catalogs and copied source text. Accept
+CRLF only at documented input boundaries, such as skill frontmatter. CLI
+tests must use unique temporary fixtures and clean them up. Never change a
+real catalog from a test or run the full check recursively.
 
 ## Native external installer
 
@@ -52,4 +70,4 @@ guide. Do not create a wrapper to force a package into a client catalog.
 
 External plugins follow upstream through client marketplace refreshes. Review
 their current content before adding a new source to the catalog. Validation
-checks that each tracked branch still has the expected package markers.
+checks current package markers only when the separate live check is run.
