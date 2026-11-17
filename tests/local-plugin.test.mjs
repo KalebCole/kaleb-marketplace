@@ -22,6 +22,17 @@ disable-model-invocation: true
 Rubber duck this message from the perspective of the person receiving it. Assume they have no context from our conversation. Add what they need to know, make the request clear, and do not invent facts. Invoke \`/humanizer\` to make it clear and natural. Return only the ready-to-send message.
 `;
 
+const expectedPruneForAgentsSkill = `---
+name: prune-for-agents
+description: Prune an agent-facing document and propose a lean replacement.
+disable-model-invocation: true
+---
+
+Invoke \`/mattpocock-skills:writing-for-agents\`.
+
+Apply its pruning guidance to the target document.
+`;
+
 const expectedSkillGrill = `---
 name: skill-grill
 description: Grill a skill idea, delegate implementation, and dogfood it until the user accepts it.
@@ -105,6 +116,7 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
     "make-this-clear",
     "obsidian-cli",
     "obsidian-markdown",
+    "prune-for-agents",
     "skill-creator",
     "skill-grill",
   ]);
@@ -150,14 +162,12 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
 
   const expectedSkills = new Map([
     ["make-this-clear", expectedMakeThisClearSkill],
+    ["prune-for-agents", expectedPruneForAgentsSkill],
     ["skill-grill", expectedSkillGrill],
   ]);
 
   for (const directoryName of skillDirectories) {
-    const skillDocument = await readFile(
-      path.join(skillRoot, directoryName, "SKILL.md"),
-      "utf8",
-    );
+    const skillDocument = await readFile(path.join(skillRoot, directoryName, "SKILL.md"), "utf8");
     const frontmatter = parseFrontmatter(skillDocument);
 
     assert.equal(frontmatter.name, directoryName);
@@ -189,7 +199,11 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
     .flat()
     .sort();
   for (const file of actualObsidianFiles) {
-    assert.ok(notices.includes(`\`skills/${file}\``), `${file} must appear in notices`);
+    const noticePath = file.split(path.sep).join("/");
+    assert.ok(
+      notices.includes(`\`skills/${noticePath}\``),
+      `${noticePath} must appear in notices`,
+    );
   }
 
   assert.deepEqual(
@@ -199,14 +213,13 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
 
 });
 
-test("skill-grill keeps model invocation disabled and omits user-invocable", async () => {
-  const skillDocument = await readFile(
-    path.join(skillRoot, "skill-grill", "SKILL.md"),
-    "utf8",
-  );
-  const frontmatter = parseFrontmatter(skillDocument);
+test("user-invoked router skills disable model invocation", async () => {
+  for (const skillName of ["prune-for-agents", "skill-grill"]) {
+    const skillDocument = await readFile(path.join(skillRoot, skillName, "SKILL.md"), "utf8");
+    const frontmatter = parseFrontmatter(skillDocument);
 
-  assert.equal(frontmatter.name, "skill-grill");
-  assert.equal(frontmatter["disable-model-invocation"], true);
-  assert.equal("user-invocable" in frontmatter, false);
+    assert.equal(frontmatter.name, skillName);
+    assert.equal(frontmatter["disable-model-invocation"], true);
+    assert.equal("user-invocable" in frontmatter, false);
+  }
 });
