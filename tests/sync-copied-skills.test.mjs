@@ -17,6 +17,7 @@ test("copied skill updater reads every upstream source from notices", async () =
   assert.equal(sources[1].sourceDir, "skills/find-docs");
   assert.equal(sources[1].sourceName, "find-docs");
   assert.equal(sources[1].branch, "master");
+  assert.equal(sources[2].automatedUpdates, false);
 });
 
 test("copied skill updater retains the local Context7 name", async () => {
@@ -39,4 +40,12 @@ test("copied skill updater records a new commit and complete copied file list", 
   assert.match(next, /Reviewed commit: `abcdefabcdefabcdefabcdefabcdefabcdefabcd`/);
   assert.match(next, /- Copied files:\n  - `skills\/bro\/SKILL.md`\n  - `skills\/bro\/references\/example.md`/);
   assert.doesNotMatch(next, /- Copied file: `skills\/bro\/SKILL.md`/);
+});
+
+test("renaming upstream CRLF skill metadata preserves its line endings", () => {
+  const input = Buffer.from("---\r\nname: find-docs\r\ndescription: Example\r\n---\r\nBody\r\n");
+  assert.equal(
+    adaptSkillFile("SKILL.md", input, { name: "find-context7-docs", sourceName: "find-docs" }).toString(),
+    "---\r\nname: find-context7-docs\r\ndescription: Example\r\n---\r\nBody\r\n",
+  );
 });

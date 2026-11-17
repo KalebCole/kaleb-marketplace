@@ -45,7 +45,7 @@ _Avoid_: maintained external reference
 - `kaleb-skills` is the only Local Stored Plugin. Its catalog entry tracks this
   repository's `main` branch for package updates; its copied skills remain
   frozen until changed in this repository.
-- Humanizer, Visual Explainer, and i-have-adhd are Maintained External Plugin
+- Humanizer, Visual Explainer, show-me, and i-have-adhd are Maintained External Plugin
   References.
 - Matt Pocock's published plugin follows his upstream branch and currently
   supplies the 27 skills in his manifest.

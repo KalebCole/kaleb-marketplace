@@ -35,6 +35,7 @@ This plugin contains frozen copies of reviewed upstream skill files.
 - Source repository: `https://github.com/anthropics/skills`
 - Reviewed commit: `8a1541c4a3ffa5a20a5a91de0dcf3f0bab1d1ef4`
 - Original source path: `skills/skill-creator/`
+- Automated source updates: `disabled`
 - Source at reviewed commit:
   <https://github.com/anthropics/skills/tree/8a1541c4a3ffa5a20a5a91de0dcf3f0bab1d1ef4/skills/skill-creator>
 - Copied files:
@@ -44,8 +45,6 @@ This plugin contains frozen copies of reviewed upstream skill files.
   - `skills/skill-creator/agents/comparator.md`
   - `skills/skill-creator/agents/grader.md`
   - `skills/skill-creator/assets/eval_review.html`
-  - `skills/skill-creator/eval-viewer/generate_review.py`
-  - `skills/skill-creator/eval-viewer/viewer.html`
   - `skills/skill-creator/references/schemas.md`
   - `skills/skill-creator/scripts/__init__.py`
   - `skills/skill-creator/scripts/aggregate_benchmark.py`
@@ -65,38 +64,41 @@ This plugin contains frozen copies of reviewed upstream skill files.
   skill's Apache-2.0 license. No applicable upstream `NOTICE` file or nested
   license override was present at the reviewed commit. Other upstream skills
   have different terms and are not included.
-- Local adjustments: none. All 18 files, including invocation metadata, are
-  unchanged. This frozen skill copy changes when a reviewed source-copy pull
-  request is merged.
+- Local adjustments: `skill-creator` is a locally maintained, platform-agnostic
+  adaptation. Automated source updates are disabled so these maintained changes
+  are not overwritten. The approved `SKILL.md` reviews results in the conversation.
+  It follows the agentskills.io skill layout, states what a skill
+  is not, prunes instructions that do not change behavior, and adds a pruning
+  review before shipping. It does not open a review canvas. The earlier
+  browser-server evaluation viewer is not part of this skill. The Copilot
+  canvas at `.github/extensions/skill-eval-review/` remains in the repository
+  and is unused by `SKILL.md`. Bundled agents, references, assets, and Python
+  helpers also remain; `SKILL.md` does not reference them.
+  `aggregate_benchmark.py` still accepts the documented single-run evaluation layout.
 
 ### Runtime dependencies and support boundaries
 
-All referenced agent instructions, reference documents, Python modules, and HTML
-templates are included. No other upstream skill or repository-level template is
-required. Paths such as `evals/evals.json`, `timing.json`, and `feedback.json`
-refer to user-created evaluation inputs and outputs, not missing bundled files.
+`SKILL.md` names user-created evaluation files such as `evals/evals.json`,
+`timing.json`, `grading.json`, and `feedback.json`. Those paths are not
+missing bundled files.
 
-The Python helpers require Python 3.10 or newer. Validation and packaging also
-require PyYAML (`import yaml` in `scripts/quick_validate.py`). Run module commands
-from the installed `skill-creator` directory as shown in `SKILL.md`; its sibling
-`scripts` package is included. The packaging script's introductory
-`utils/package_skill.py` examples are legacy upstream paths; the actual bundled
-entry point is `python -m scripts.package_skill`, as specified in `SKILL.md`.
+The copied directory still includes agent instructions, reference documents,
+the HTML trigger-review template, and Python modules. `SKILL.md` does not
+reference them. The Python helpers require Python 3.10 or newer. Validation
+and packaging scripts import PyYAML (`import yaml` in
+`scripts/quick_validate.py`). Module commands run from the installed
+`skill-creator` directory; its sibling `scripts` package is included. The
+packaging script's introductory `utils/package_skill.py` examples are legacy
+upstream paths. The bundled entry point is `python -m scripts.package_skill`.
 
-Description optimization requires an authenticated Claude Code CLI (`claude -p`)
-and writes temporary commands under the current project's `.claude/commands/`.
-It is not a Copilot-native evaluation backend. Subagent and presentation steps
-depend on the host's available tools; storage and catalog validation do not prove
-equivalent execution in every client.
-
-The HTML templates request Google Fonts. The evaluation viewer requests
-SheetJS 0.20.3 from its upstream CDN, with the upstream integrity attribute, for
-spreadsheet rendering. These remote resources are not copied into this plugin;
-those features require network access. The Python viewer otherwise uses only
-the standard library and includes a `--static` output mode. Its unchanged server
-mode attempts to terminate existing listeners on the selected port; use static
-mode in a shared environment. Repository validation does not execute these
-bundled helpers or make model calls.
+`scripts/run_loop.py` still expects an authenticated Claude Code CLI
+(`claude -p`) and writes temporary commands under the current project's
+`.claude/commands/`. `SKILL.md` does not run that loop. The trigger-review
+HTML template requests Google Fonts. It requests no external scripts. The
+remote fonts are not copied into this plugin and require network access.
+Repository validation executes the benchmark aggregator with temporary fixture
+data and bytecode writes disabled. It does not make model calls or run the
+Claude-dependent helpers.
 
 ## `obsidian-cli`
 

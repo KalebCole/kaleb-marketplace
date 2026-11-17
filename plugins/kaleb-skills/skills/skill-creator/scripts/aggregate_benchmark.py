@@ -101,15 +101,21 @@ def load_run_results(benchmark_dir: Path) -> dict:
         for config_dir in sorted(eval_dir.iterdir()):
             if not config_dir.is_dir():
                 continue
+            run_dirs = sorted(config_dir.glob("run-*"))
+            if not run_dirs and (config_dir / "grading.json").exists():
+                run_dirs = [config_dir]
             # Skip non-config directories (inputs, outputs, etc.)
-            if not list(config_dir.glob("run-*")):
+            if not run_dirs:
                 continue
             config = config_dir.name
             if config not in results:
                 results[config] = []
 
-            for run_dir in sorted(config_dir.glob("run-*")):
-                run_number = int(run_dir.name.split("-")[1])
+            for default_run_number, run_dir in enumerate(run_dirs, start=1):
+                if run_dir == config_dir:
+                    run_number = default_run_number
+                else:
+                    run_number = int(run_dir.name.split("-")[1])
                 grading_file = run_dir / "grading.json"
 
                 if not grading_file.exists():

@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 concurrency:
   group: sync-copied-skills
@@ -25,8 +26,17 @@ jobs:
         with:
           node-version: 22
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - run: npm ci
+
       - name: Copy changed upstream skills
         run: node scripts/sync-copied-skills.mjs
+
+      - name: Validate copied package before publication
+        run: npm run check
 
       - name: Open or update pull request
         if: ${{ success() }}
@@ -55,11 +65,4 @@ jobs:
               --body "Copies changed skill files from their source repositories and records the source commits. Review the copied content and license notices before merging."
           fi
 
-      - run: npm ci
-        if: ${{ success() }}
-
-      - name: Validate copied package
-        if: ${{ success() }}
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: bash scripts/validate-marketplace.sh
+          gh workflow run validate.yml --ref "$branch"

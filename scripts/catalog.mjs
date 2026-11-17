@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { pathToFileURL } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
 
 const CANONICAL_CATALOG_PATH = ".agents/plugins/marketplace.json";
@@ -16,7 +17,7 @@ function catalogPath(root, relativePath) {
 }
 
 function repoRelativeDisplayPath(root, filePath) {
-  return path.relative(root, filePath) || path.basename(filePath);
+  return path.relative(root, filePath).split(path.sep).join("/") || path.basename(filePath);
 }
 
 function fail(message, exitCode = 1) {
@@ -253,7 +254,7 @@ async function writeGeneratedFiles(root, catalog) {
   }
 }
 
-async function checkGeneratedFiles(root, catalog) {
+export async function checkGeneratedFiles(root, catalog) {
   const outputs = [
     [catalogPath(root, COPILOT_OUTPUT_PATH), renderJson(generateCopilotCatalog(catalog))],
     [catalogPath(root, CLAUDE_OUTPUT_PATH), renderJson(generateClaudeCatalog(catalog))],
@@ -308,27 +309,34 @@ async function runVerifySources(root) {
 }
 
 async function main(argv = process.argv.slice(2), root = process.cwd()) {
+  if (argv.length !== 1) {
+    throw new Error("Usage: catalog.mjs <generate|check|validate|verify-sources>");
+  }
   const [command] = argv;
 
   switch (command) {
     case "generate":
       await runGenerate(root);
+      console.log("Generated both client catalogs");
       return;
     case "check":
       await runCheck(root);
+      console.log("Generated catalogs match");
       return;
     case "validate":
       await runValidate(root);
+      console.log("Canonical catalog is valid");
       return;
     case "verify-sources":
       await runVerifySources(root);
+      console.log("Upstream branches are available");
       return;
     default:
       throw new Error(`Unknown command: ${command ?? "<none>"}`);
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   main().catch((error) => {
     fail(error instanceof Error ? error.message : String(error));
   });

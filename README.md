@@ -49,10 +49,19 @@ npx impeccable install
 
 ## Validate
 
+Install Node.js 22 or later, Git, and Python 3.10 or later. These commands are
+the same in PowerShell, macOS Terminal, and Linux:
+
 ```bash
 npm ci
-bash scripts/validate-marketplace.sh
+npm run generate
+npm run check
 ```
+
+The default check is offline. It does not install plugins or change client
+settings. For current upstream branches and package markers, run
+`npm run check:live`. Client checks require explicit flags; see
+[maintenance](docs/maintenance.md).
 
 See [contributing](docs/contributing.md) and
 [maintenance](docs/maintenance.md).
