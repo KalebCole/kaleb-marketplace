@@ -11,7 +11,7 @@ test("copied skill updater reads every upstream source from notices", async () =
   const notices = await readFile(noticesPath, "utf8");
   const sources = sections(notices).map(sourceDetails);
   assert.deepEqual(sources.map(({ name }) => name), [
-    "bro", "find-context7-docs", "skill-creator", "obsidian-cli", "obsidian-markdown",
+    "bro", "find-context7-docs", "skill-creator", "obsidian-cli", "obsidian-markdown", "i-have-adhd",
   ]);
   assert.equal(sources[2].sourceDir, "skills/skill-creator");
   assert.equal(sources[1].sourceDir, "skills/find-docs");

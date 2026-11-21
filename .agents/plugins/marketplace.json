@@ -60,19 +60,6 @@
       "category": "Productivity"
     },
     {
-      "name": "i-have-adhd",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/ayghri/i-have-adhd.git",
-        "ref": "main"
-      },
-      "policy": {
-        "installation": "AVAILABLE",
-        "authentication": "ON_INSTALL"
-      },
-      "category": "Productivity"
-    },
-    {
       "name": "mattpocock-skills",
       "source": {
         "source": "url",

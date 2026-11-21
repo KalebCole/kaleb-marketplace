@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -133,4 +133,49 @@ test("verifyExternalSource checks Matt's tracked branch and package markers", as
       "/repos/mattpocock/skills/contents/LICENSE",
     ],
   );
+});
+
+test("kaleb-skills rejects packaged hooks and manifest hook declarations", async (t) => {
+  const fixture = await mkdtemp(path.join(os.tmpdir(), "kaleb-no-hooks-"));
+  t.after(() => rm(fixture, { recursive: true, force: true }));
+  const plugin = path.join(fixture, "plugins", "kaleb-skills");
+  await mkdir(path.join(fixture, "schemas"), { recursive: true });
+  await cp(
+    path.join(import.meta.dirname, "../schemas/agent-plugin-1.0.schema.json"),
+    path.join(fixture, "schemas/agent-plugin-1.0.schema.json"),
+  );
+  await mkdir(path.join(plugin, "skills", "example"), { recursive: true });
+  const manifest = {
+    $schema: "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+    name: "kaleb-skills",
+  };
+  await writeFile(path.join(plugin, "plugin.json"), JSON.stringify(manifest));
+  for (const name of ["LICENSE", "THIRD_PARTY_NOTICES.md"]) {
+    await writeFile(path.join(plugin, name), "Fixture\n");
+  }
+  await writeFile(
+    path.join(plugin, "skills/example/SKILL.md"),
+    "---\nname: example\ndescription: Example skill.\n---\nBody.\n",
+  );
+  const catalog = { plugins: [{
+    name: "kaleb-skills",
+    source: { source: "local", path: "./plugins/kaleb-skills" },
+  }] };
+  await validateLocalPlugins(fixture, catalog);
+
+  for (const relative of ["hooks/hooks.json", "skills/example/hooks.json"]) {
+    await t.test(relative, async () => {
+      const target = path.join(plugin, relative);
+      await mkdir(path.dirname(target), { recursive: true });
+      await writeFile(target, '{"hooks":{}}');
+      await assert.rejects(() => validateLocalPlugins(fixture, catalog), /must not include hooks/);
+      await rm(relative.startsWith("hooks/") ? path.dirname(target) : target, { recursive: true });
+    });
+  }
+  await t.test("manifest extension", async () => {
+    await writeFile(path.join(plugin, "plugin.json"), JSON.stringify({
+      ...manifest, extensions: { claude: { hooks: "./startup.json" } },
+    }));
+    await assert.rejects(() => validateLocalPlugins(fixture, catalog), /must not declare hooks/);
+  });
 });

@@ -19,6 +19,9 @@ repository, source path, exact copied commit, copyright notice, and license in
 `THIRD_PARTY_NOTICES.md`. The scheduled updater proposes changed copies in a
 pull request. Review the content and license before merging it.
 
+`kaleb-skills` contains skills only. Validation rejects hook declarations,
+`hooks` directories, and `hooks.json` files anywhere in that package.
+
 ## Maintained external plugin reference
 
 Add a native source to `.agents/plugins/marketplace.json`. External plugins
