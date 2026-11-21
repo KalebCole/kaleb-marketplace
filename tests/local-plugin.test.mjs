@@ -113,6 +113,7 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
   assert.deepEqual(skillDirectories, [
     "bro",
     "find-context7-docs",
+    "i-have-adhd",
     "make-this-clear",
     "obsidian-cli",
     "obsidian-markdown",
@@ -142,6 +143,7 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
           ["skill-creator", "https://github.com/anthropics/skills"],
           ["obsidian-cli", "https://github.com/kepano/obsidian-skills"],
           ["obsidian-markdown", "https://github.com/kepano/obsidian-skills"],
+          ["i-have-adhd", "https://github.com/ayghri/i-have-adhd"],
         ],
       );
     });
@@ -222,4 +224,11 @@ test("user-invoked router skills disable model invocation", async () => {
     assert.equal(frontmatter["disable-model-invocation"], true);
     assert.equal("user-invocable" in frontmatter, false);
   }
+});
+
+test("i-have-adhd requires explicit activation", async () => {
+  const document = await readFile(path.join(skillRoot, "i-have-adhd", "SKILL.md"), "utf8");
+  assert.equal(parseFrontmatter(document)["disable-model-invocation"], true);
+  const agent = yaml.load(await readFile(path.join(skillRoot, "i-have-adhd", "agents", "openai.yaml"), "utf8"));
+  assert.equal(agent.policy.allow_implicit_invocation, false);
 });

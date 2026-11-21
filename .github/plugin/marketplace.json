@@ -48,15 +48,6 @@
       "category": "Productivity"
     },
     {
-      "name": "i-have-adhd",
-      "source": {
-        "source": "github",
-        "repo": "ayghri/i-have-adhd",
-        "ref": "main"
-      },
-      "category": "Productivity"
-    },
-    {
       "name": "mattpocock-skills",
       "source": {
         "source": "github",

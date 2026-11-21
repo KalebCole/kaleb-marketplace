@@ -32,13 +32,6 @@ const externalMarkers = {
     "plugins/show-me/skills/show-me/SKILL.md",
     "LICENSE",
   ],
-  "i-have-adhd": [
-    "plugin.json",
-    ".agents/plugins/marketplace.json",
-    ".claude-plugin/plugin.json",
-    "skills/i-have-adhd/SKILL.md",
-    "LICENSE",
-  ],
   "mattpocock-skills": [
     ".claude-plugin/plugin.json",
     "skills/engineering/grill-with-docs/SKILL.md",
@@ -122,6 +115,26 @@ export async function validateLocalPlugins(repoRoot, catalog) {
     }
     if (manifest.name !== entry.name) {
       throw new Error(`${entry.name} catalog and plugin manifest names differ`);
+    }
+
+    if (entry.name === "kaleb-skills") {
+      const rejectHookKeys = (value) => {
+        if (!value || typeof value !== "object") return;
+        for (const [key, child] of Object.entries(value)) {
+          if (key === "hooks") throw new Error("kaleb-skills must not declare hooks");
+          rejectHookKeys(child);
+        }
+      };
+      rejectHookKeys(manifest);
+      const checkDirectory = async (directory) => {
+        for (const item of await readdir(directory, { withFileTypes: true })) {
+          if (item.name === "hooks" || item.name === "hooks.json") {
+            throw new Error("kaleb-skills must not include hooks or hooks.json");
+          }
+          if (item.isDirectory()) await checkDirectory(path.join(directory, item.name));
+        }
+      };
+      await checkDirectory(pluginRoot);
     }
 
     const skillsRoot = path.join(pluginRoot, "skills");

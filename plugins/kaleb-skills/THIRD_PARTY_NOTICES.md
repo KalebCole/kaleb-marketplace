@@ -127,3 +127,20 @@ Claude-dependent helpers.
   `Copyright (c) 2026 Steph Ango (@kepano)`
 - License status: MIT; `LICENSE` in this plugin reproduces the reviewed MIT
   text from the source repository.
+
+## `i-have-adhd`
+
+- Source repository: `https://github.com/ayghri/i-have-adhd`
+- Reviewed commit: `1ecea1993b7fce257ffbd686c070948b5e07eda6`
+- Original source path: `skills/i-have-adhd/`
+- Copied files:
+  - `skills/i-have-adhd/SKILL.md`
+  - `skills/i-have-adhd/agents/gemini.toml`
+  - `skills/i-have-adhd/agents/openai.yaml`
+- Reviewed license path: `LICENSE`
+- Copyright notice: `Copyright (c) 2026 Ayoub Ghriss`
+- License status: MIT; the complete source license is included in this plugin's
+  `LICENSE`.
+- All 3 files, including invocation metadata, are copied without changes from
+  upstream v0.4.1. Activation is manual. Only the skill directory is distributed;
+  upstream plugin manifests and hooks are outside this package.

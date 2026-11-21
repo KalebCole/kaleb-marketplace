@@ -57,6 +57,17 @@ when a proposed source-copy update is merged into this repository.
 Successful validation for one client is not proof of support for another
 client.
 
+### ADHD output skill
+
+`i-have-adhd` is included in `kaleb-skills` 2.6.0 and later. Invoke it explicitly
+with `$i-have-adhd` in Codex. It stays active for that session until you say
+"stop adhd mode" or "normal mode". The bundle contains no startup hooks.
+
+If you installed the former separate `i-have-adhd` plugin, uninstall it in your
+client and update `kaleb-skills`. Removing a marketplace listing does not
+uninstall existing copies. Remove any personal copy of the skill after the
+updated bundle is installed to avoid duplicate entries.
+
 ### Matt Pocock's skills
 
 The `mattpocock-skills` entry uses Matt's upstream plugin and its published
