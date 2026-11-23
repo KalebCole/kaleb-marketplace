@@ -55,15 +55,6 @@
         "ref": "main"
       },
       "category": "Developer Tools"
-    },
-    {
-      "name": "lavish-axi",
-      "source": {
-        "source": "github",
-        "repo": "kunchenguid/lavish-axi",
-        "ref": "main"
-      },
-      "category": "Productivity"
     }
   ]
 }

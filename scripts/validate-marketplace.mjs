@@ -38,7 +38,6 @@ const externalMarkers = {
     "skills/productivity/grill-me/SKILL.md",
     "LICENSE",
   ],
-  "lavish-axi": ["plugin.json", "skills/lavish/SKILL.md", "LICENSE"],
 };
 
 function githubRepo(url) {
