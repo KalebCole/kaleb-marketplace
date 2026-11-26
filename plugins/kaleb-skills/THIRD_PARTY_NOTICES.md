@@ -18,10 +18,12 @@ This plugin contains frozen copies of reviewed upstream skill files.
 
 - Source repository: `https://github.com/upstash/context7`
 - Source branch: `master`
-- Reviewed commit: `ef472a4912d594fdd193a5f929fab4c62796e287`
+- Reviewed commit: `6335fd8458bb942205c24c8b89e8bc97b0950804`
 - Original source path: `skills/find-docs/SKILL.md`
 - Source skill name: `find-docs`
-- Copied file: `skills/find-context7-docs/SKILL.md`
+- Copied files:
+  - `skills/find-context7-docs/SKILL.md`
+
 - Reviewed license path: `LICENSE`
 - Copyright notice: `Copyright (c) 2021 Upstash, Inc.`
 - License status: MIT; `LICENSE` in this plugin reproduces the reviewed MIT
@@ -103,9 +105,11 @@ Claude-dependent helpers.
 ## `obsidian-cli`
 
 - Source repository: `https://github.com/obsidianmd/obsidian-skills`
-- Reviewed commit: `3ccff5338ea700537839b21900aa5358a0402c98`
+- Reviewed commit: `79e85b73ef041fdfb6437ab3824e2fe29eda9244`
 - Original source path: `plugins/obsidian/skills/obsidian-cli/SKILL.md`
-- Copied file: `skills/obsidian-cli/SKILL.md`
+- Copied files:
+  - `skills/obsidian-cli/SKILL.md`
+
 - Reviewed license path: `LICENSE`
 - Copyright notice:
   `Copyright (c) 2026 Steph Ango (@kepano)`
@@ -115,7 +119,7 @@ Claude-dependent helpers.
 ## `obsidian-markdown`
 
 - Source repository: `https://github.com/obsidianmd/obsidian-skills`
-- Reviewed commit: `3ccff5338ea700537839b21900aa5358a0402c98`
+- Reviewed commit: `79e85b73ef041fdfb6437ab3824e2fe29eda9244`
 - Original source path: `plugins/obsidian/skills/obsidian-markdown/SKILL.md`
 - Copied files:
   - `skills/obsidian-markdown/SKILL.md`
