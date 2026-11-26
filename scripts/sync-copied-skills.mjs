@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFile } from "node:child_process";
-import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { parseArgs, promisify } from "node:util";
@@ -67,6 +67,18 @@ export function adaptSkillFile(file, content, source) {
     throw new Error(`Missing source skill name in ${source.name}`);
   }
   return Buffer.from(text.replace(original, `---${newline}name: ${source.name}${newline}`));
+}
+
+export async function resolveUpstreamSkillDirectory(checkout, source) {
+  const directory = path.join(checkout, source.sourceDir);
+  const info = await stat(directory).catch((error) => {
+    if (error.code === "ENOENT" || error.code === "ENOTDIR") return null;
+    throw error;
+  });
+  if (!info?.isDirectory()) {
+    throw new Error(`${source.name}: upstream skill directory ${source.sourceDir} is missing; update Original source path in THIRD_PARTY_NOTICES.md`);
+  }
+  return directory;
 }
 
 async function listFiles(directory, prefix = "") {
@@ -154,7 +166,7 @@ export async function syncCopiedSkills({ dryRun = false, repoRoot = root } = {})
       const { checkout, commit } = repositories.get(`${source.url}#${source.branch}`);
       if (commit === source.commit) continue;
 
-      const upstreamSkill = path.join(checkout, source.sourceDir);
+      const upstreamSkill = await resolveUpstreamSkillDirectory(checkout, source);
       const storedSkill = path.join(pluginRoot, "skills", source.name);
       if (await sameDirectory(upstreamSkill, storedSkill, source)) continue;
 

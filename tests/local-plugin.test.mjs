@@ -141,8 +141,8 @@ test("kaleb-skills plugin ships the frozen reviewed skills and notices", async (
           ["bro", "https://github.com/dmmulroy/skills"],
           ["find-context7-docs", "https://github.com/upstash/context7"],
           ["skill-creator", "https://github.com/anthropics/skills"],
-          ["obsidian-cli", "https://github.com/kepano/obsidian-skills"],
-          ["obsidian-markdown", "https://github.com/kepano/obsidian-skills"],
+          ["obsidian-cli", "https://github.com/obsidianmd/obsidian-skills"],
+          ["obsidian-markdown", "https://github.com/obsidianmd/obsidian-skills"],
           ["i-have-adhd", "https://github.com/ayghri/i-have-adhd"],
         ],
       );

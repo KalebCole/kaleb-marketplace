@@ -102,9 +102,9 @@ Claude-dependent helpers.
 
 ## `obsidian-cli`
 
-- Source repository: `https://github.com/kepano/obsidian-skills`
+- Source repository: `https://github.com/obsidianmd/obsidian-skills`
 - Reviewed commit: `3ccff5338ea700537839b21900aa5358a0402c98`
-- Original source path: `skills/obsidian-cli/SKILL.md`
+- Original source path: `plugins/obsidian/skills/obsidian-cli/SKILL.md`
 - Copied file: `skills/obsidian-cli/SKILL.md`
 - Reviewed license path: `LICENSE`
 - Copyright notice:
@@ -114,9 +114,9 @@ Claude-dependent helpers.
 
 ## `obsidian-markdown`
 
-- Source repository: `https://github.com/kepano/obsidian-skills`
+- Source repository: `https://github.com/obsidianmd/obsidian-skills`
 - Reviewed commit: `3ccff5338ea700537839b21900aa5358a0402c98`
-- Original source path: `skills/obsidian-markdown/SKILL.md`
+- Original source path: `plugins/obsidian/skills/obsidian-markdown/SKILL.md`
 - Copied files:
   - `skills/obsidian-markdown/SKILL.md`
   - `skills/obsidian-markdown/references/CALLOUTS.md`
